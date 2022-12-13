@@ -15,8 +15,8 @@
   ```bash
   git clone https://github.com/tomatocuke/chatgpt.git
   cd chatgpt
-  docker build -t chatgpt .
-  docker run -p 8080:8080 -e API_KEY=xxx -e WX_TOKEN=xxx chatgpt
+  docker build -t chatgpt-wechat .
+  docker run -d --name=chatgpt-wechat -p 8080:8080 -e API_KEY=xxx -e WX_TOKEN=xxx chatgpt-wechat
   ```
 - Golang运行
   ```bash 

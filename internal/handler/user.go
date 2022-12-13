@@ -15,6 +15,9 @@ var (
 	cache sync.Map
 )
 
+// 请求失败，返回给用户的话术
+const TimeoutMsg = "..."
+
 func WechatCheck(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	signature := query.Get("signature")
@@ -63,7 +66,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	case s := <-ch:
 		close(ch)
 		if s == "" {
-			s = "Sorry，超时了..."
+			s = TimeoutMsg
 		}
 		bs := msg.GenerateEchoData(s)
 		echo(w, bs)
@@ -80,7 +83,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "chatgptlication/text; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(s))
-	log.Println("回复消息:", s)
+	log.Println("收到消息:", msg, ", 回复消息:", s)
 }
 
 func echo(w http.ResponseWriter, data []byte) {

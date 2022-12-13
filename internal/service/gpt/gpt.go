@@ -1,14 +1,17 @@
 package gpt
 
 import (
+	"bytes"
 	"chatgpt/config"
-	"chatgpt/util"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"strings"
 	"time"
 )
 
 const (
-	// https://beta.openai.com/docs/api-reference/making-requests
 	api = "https://api.openai.com/v1/completions"
 )
 
@@ -19,6 +22,9 @@ type response struct {
 	// Model   string                 `json:"model"`
 	Choices []choiceItem `json:"choices"`
 	// Usage   map[string]interface{} `json:"usage"`
+	Error struct {
+		Message string `json:"message"`
+	} `json:"error"`
 }
 
 type choiceItem struct {
@@ -28,6 +34,7 @@ type choiceItem struct {
 	// FinishReason string `json:"finish_reason"`
 }
 
+// https://beta.openai.com/docs/api-reference/making-requests
 func Completions(msg string, timeout time.Duration) string {
 	// start := time.Now()
 	params := map[string]interface{}{
@@ -41,18 +48,38 @@ func Completions(msg string, timeout time.Duration) string {
 		// "presence_penalty":  0,
 		// "stop":              "\n",
 	}
-	var resp response
-	err := util.HttpPostJson(api, params).
-		AddHeader("Authorization", "Bearer "+config.ApiKey).
-		SetTimeout(timeout).DoTo(&resp)
 
-	// fmt.Println("耗时:", int(time.Since(start).Seconds()))
+	bs, _ := json.Marshal(params)
+	client := &http.Client{Timeout: timeout}
+	req, _ := http.NewRequest("POST", api, bytes.NewReader(bs))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+config.ApiKey)
+
+	resp, err := client.Do(req)
 	if err != nil {
+		log.Println("ERROR:", err)
+		return ""
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Timeout") {
+			log.Println("ERROR:", err)
+		} else {
+			log.Println("超时:", msg)
+		}
 		return ""
 	}
 
-	if len(resp.Choices) > 0 {
-		return strings.TrimSpace(resp.Choices[0].Text)
+	var data response
+	json.Unmarshal(body, &data)
+	if data.Error.Message != "" {
+		log.Println("ERROR:", data.Error.Message)
+		return ""
+	}
+
+	if len(data.Choices) > 0 {
+		return strings.TrimSpace(data.Choices[0].Text)
 	}
 
 	return ""

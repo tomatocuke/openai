@@ -1,12 +1,13 @@
 ### 说明
-- 功能。该项目通过调用`ChatGPT`提供微信公众号自动回复服务 (需要你有`ChatGPT`账号)
-- 限制。微信5s内收不到回复，会再重试2次，即单条消息最久15s，如果`ChatGPT`超时则没办法给出回复。
-- 内容。`ChatGPT`的结果仅供参考，目测对中文的一些知识不友好，存在睁眼说瞎话的情况。
-- 调节。可以自行查看代码和参考openai的文档进行`ChatGPT`调节参数
+- 注意。有别于网页版`ChatGPT`基于GPT-3.5，本项目是调用GPT-3。(网页版速度更难以在微信规定时间内返回，且OpenAI未开放该部分接口，伪装HTTP存在一些问题)
+- 功能。该项目通过调用[OpenAI](https://beta.openai.com)提供微信公众号自动回复服务
+- 限制。微信5s内收不到回复，会再重试2次，即单条消息最久15s，如果超时则没办法给出回复。
+- 内容。仅供参考，目测对中文的一些知识不友好，存在睁眼说瞎话的情况。
+
 
 
 ### 参数获取
-- `ChatGPT`的`API_KEY`：翻墙，开启全局代理，[openai](https://beta.openai.com/account/api-keys) （如果访问被拒绝，注意全局代理，打开调试，Application清除LocalStorage后刷新，实测可以）
+- `API_KEY`：翻墙，开启全局代理，[OpenAI](https://beta.openai.com/account/api-keys) （如果访问被拒绝，注意全局代理，打开调试，Application清除LocalStorage后刷新，实测可以）
 - 微信公众号令牌`TOKEN`：[微信公众平台](https://mp.weixin.qq.com/) -> 基本配置 -> 生成令牌 -> 按下边部署启动服务 -> 设置服务器地址 `http://x.x.x.x:8080/chatgpt`
 
 

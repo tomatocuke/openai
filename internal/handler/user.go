@@ -13,26 +13,9 @@ import (
 )
 
 var (
-	success = []byte("success")
-	users   sync.Map
+	success  = []byte("success")
+	requests sync.Map // K - 消息ID ， V - chan string
 )
-
-type user struct {
-	ch       chan string
-	requests sync.Map
-}
-
-func GetUser(id string) *user {
-	v, ok := users.Load(id)
-	if ok {
-		return v.(*user)
-	}
-	u := &user{
-		ch: make(chan string, 5),
-	}
-	users.Store(id, u)
-	return u
-}
 
 func WechatCheck(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
@@ -63,24 +46,34 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 其余正常询问请求
-	u := GetUser(msg.FromUserName)
-
 	// 5s超时
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	_, ok := u.requests.Load(msg.MsgId)
+	var ch chan string
+	v, ok := requests.Load(msg.MsgId)
 	if !ok {
-		go func() {
+		ch = make(chan string)
+		requests.Store(msg.MsgId, ch)
+		go func(id int64, msg string, ctx context.Context) {
 			// 最久第3次要给微信回复，设置超时时间为14秒
-			u.ch <- gpt.Query(msg.Content, time.Second*14)
-			u.requests.Delete(msg.MsgId)
-		}()
+			result := gpt.Query(msg, time.Second*14)
+			select {
+			// 第一次5s已经超时，什么都不做
+			case <-ctx.Done():
+			// 第一次5s及时返回
+			default:
+				ch <- result
+			}
+			requests.Delete(id)
+			close(ch)
+		}(msg.MsgId, msg.Content, ctx)
+	} else {
+		ch = v.(chan string)
 	}
 
 	select {
-	case result := <-u.ch:
+	case result := <-ch:
 		bs := msg.GenerateEchoData(result)
 		echo(w, bs)
 	// 超时不要回答，会重试的

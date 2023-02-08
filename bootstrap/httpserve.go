@@ -25,11 +25,11 @@ func (engine *Engine) addRoute(method string, pattern string, handler HandlerFun
 }
 
 func (engine *Engine) GET(pattern string, handler HandlerFunc) {
-	engine.addRoute("GET", pattern, handler)
+	engine.addRoute(http.MethodGet, pattern, handler)
 }
 
 func (engine *Engine) POST(pattern string, handler HandlerFunc) {
-	engine.addRoute("POST", pattern, handler)
+	engine.addRoute(http.MethodPost, pattern, handler)
 }
 
 func (engine *Engine) Run(addr string) (err error) {

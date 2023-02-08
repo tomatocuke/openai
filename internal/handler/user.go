@@ -4,6 +4,7 @@ import (
 	"chatgpt/config"
 	"chatgpt/internal/service/gpt"
 	"chatgpt/internal/service/wechat"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -12,11 +13,26 @@ import (
 )
 
 var (
-	cache sync.Map
+	success = []byte("success")
+	users   sync.Map
 )
 
-// 请求失败，返回给用户的话术
-const TimeoutMsg = "..."
+type user struct {
+	ch       chan string
+	requests sync.Map
+}
+
+func GetUser(id string) *user {
+	v, ok := users.Load(id)
+	if ok {
+		return v.(*user)
+	}
+	u := &user{
+		ch: make(chan string, 5),
+	}
+	users.Store(id, u)
+	return u
+}
 
 func WechatCheck(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
@@ -35,55 +51,60 @@ func WechatCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 // https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html
+// 微信服务器在五秒内收不到响应会断掉连接，并且重新发起请求，总共重试三次
 func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	bs, _ := io.ReadAll(r.Body)
 	msg := wechat.NewMsg(bs)
 
-	// 非文本不回复
+	// 非文本不回复(返回success表示不回复)
 	if !msg.IsText() {
 		log.Println("非文本不回复")
-		echo(w, []byte("success"))
+		echo(w, success)
 		return
 	}
 
-	var ch chan string
-	v, ok := cache.Load(msg.MsgId)
-	if ok {
-		ch = v.(chan string)
-	} else {
-		ch := make(chan string)
-		cache.Store(msg.MsgId, ch)
+	// 其余正常询问请求
+	u := GetUser(msg.FromUserName)
+
+	// 5s超时
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	_, ok := u.requests.Load(msg.MsgId)
+	if !ok {
 		go func() {
-			defer cache.Delete(msg.MsgId)
-			//  在第15s前也就是第三个请求结束前，必须获取结果，否则无法返回。
-			ch <- gpt.Completions(msg.Content, time.Second*14)
+			// 最久第3次要给微信回复，设置超时时间为14秒
+			u.ch <- gpt.Query(msg.Content, time.Second*14)
+			u.requests.Delete(msg.MsgId)
 		}()
 	}
 
-	// 5s内不返回，会再发起2次重试
 	select {
-	// ch最晚在第三个请求结束前收到信息
-	case s := <-ch:
-		close(ch)
-		if s == "" {
-			s = TimeoutMsg
-		}
-		bs := msg.GenerateEchoData(s)
+	case result := <-u.ch:
+		bs := msg.GenerateEchoData(result)
 		echo(w, bs)
-		log.Println("收到消息:", msg.Content, "回复消息:", s)
-	// 第一次、第二次失败走这里，腾讯已抛弃接收，发起重试，我们再退出select
-	case <-time.After(time.Second * 5):
-		return
+	// 超时不要回答，会重试的
+	case <-ctx.Done():
 	}
 }
 
 func Test(w http.ResponseWriter, r *http.Request) {
 	msg := r.URL.Query().Get("msg")
-	s := gpt.Completions(msg, time.Second*30)
-	w.Header().Set("Content-Type", "chatgptlication/text; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(s))
-	log.Println("收到消息:", msg, ", 回复消息:", s)
+	s := gpt.Query(msg, time.Second*10)
+	echo(w, []byte(s))
+}
+
+func SetMode(w http.ResponseWriter, r *http.Request) {
+	mode := r.URL.Query().Get("mode")
+	switch mode {
+	case "1":
+		gpt.CurrentMode = gpt.FastMode
+	case "2":
+		gpt.CurrentMode = gpt.NormalMode
+	case "3":
+		gpt.CurrentMode = gpt.MaxMode
+	}
+	echo(w, []byte("ok"))
 }
 
 func echo(w http.ResponseWriter, data []byte) {

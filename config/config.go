@@ -21,6 +21,9 @@ func init() {
 		fmt.Println("API_KEY 不能为空")
 		os.Exit(0)
 	}
+	if WxToken == "" {
+		fmt.Println("WX_TOKEN 未设置，不能用于公众号服务")
+	}
 	if ServerPort == "" {
 		ServerPort = "8080"
 	}

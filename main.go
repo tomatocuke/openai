@@ -23,15 +23,24 @@ func main() {
 	r.GET("/mode", handler.SetMode)
 
 	// 设置日志
-	f, err := os.OpenFile("./chatgpt.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0755)
-	if err != nil {
-		panic(err)
-	}
-	log.SetOutput(f)
+	SetLog()
 
 	fmt.Printf("启动服务，使用 curl 'http://127.0.0.1:%s/test?msg=你好哇' 测试一下吧\n", config.ServerPort)
 
 	if err := http.ListenAndServe(":"+config.ServerPort, r); err != nil {
 		panic(err)
 	}
+}
+
+func SetLog() {
+	dir := "./log"
+	_, err := os.Stat(dir)
+	if err != nil && os.IsNotExist(err) {
+		os.Mkdir(dir, 0755)
+	}
+	f, err := os.OpenFile(dir+"/chatgpt.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0755)
+	if err != nil {
+		panic(err)
+	}
+	log.SetOutput(f)
 }

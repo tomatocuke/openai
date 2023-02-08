@@ -40,7 +40,7 @@
   git clone https://github.com/tomatocuke/chatgpt.git
   cd chatgpt
   docker build -t chatgpt-wechat .
-  docker run -d --name=chatgpt-wechat -p 9001:8080 -e API_KEY=xxx -e WX_TOKEN=xxx chatgpt-wechat
+  docker run -p 9001:8080 -e API_KEY=xxx -e WX_TOKEN=xxx chatgpt-wechat -d -v $PWD/log:/app/log chatgpt-wechat@latest
   ```
 - Golang运行
   ```bash 
@@ -51,4 +51,4 @@
 
 ### 说明
 - 模式。内部设置3中模式，通过 `http://127.0.0.1:端口/mode?mode=n` 设置，n取1、2、3，分别对应最快和最慢。默认是最快模式，但是字数少，遇到多字结果会出现截断。调节到2、3模式，字数增加，微信可能无法在有效时间内返回结果。
-- 日志。查看chatgpt.log
+- 日志。查看`tail -f ./log/chatgpt.log`

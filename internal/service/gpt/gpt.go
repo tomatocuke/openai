@@ -16,19 +16,6 @@ const (
 	api = "https://api.openai.com/v1/completions"
 )
 
-var (
-	CurrentMode = FastMode
-)
-
-type Mode uint8
-
-const (
-	_          Mode = iota
-	FastMode        // 快速模式
-	NormalMode      // 一般模式
-	MaxMode         // 开放模式
-)
-
 type response struct {
 	ID string `json:"id"`
 	// Object  string                 `json:"object"`
@@ -50,7 +37,7 @@ type choiceItem struct {
 
 // OpenAI可能无法在希望的时间内做出回复
 // 使用goroutine + channel 的形式，不管是否能及时回复用户，后台都打印结果
-func Query(msg string, timeout time.Duration) string {
+func Query(isFast bool, msg string, timeout time.Duration) string {
 	start := time.Now()
 	ch := make(chan string, 1)
 	ctx, candel := context.WithTimeout(context.Background(), timeout)
@@ -58,7 +45,7 @@ func Query(msg string, timeout time.Duration) string {
 
 	go func() {
 		defer close(ch)
-		result, err := completions(msg, time.Second*100)
+		result, err := completions(isFast, msg, time.Second*100)
 		if err != nil {
 			result = "发生错误「" + err.Error() + "」，您重试一下"
 		}
@@ -83,27 +70,20 @@ func Query(msg string, timeout time.Duration) string {
 }
 
 // https://beta.openai.com/docs/api-reference/making-requests
-func completions(msg string, timeout time.Duration) (string, error) {
-	var wordSize int
-	var temperature float64
+func completions(isFast bool, msg string, timeout time.Duration) (string, error) {
+	wordSize := 30 // 中文字符数量
+	temperature := 0.3
 
-	switch CurrentMode {
-	case FastMode:
-		wordSize = 30 // 中文字符数量
-		temperature = 0.2
-	case NormalMode:
-		wordSize = 100
-		temperature = 0.5
-	case MaxMode:
+	if !isFast {
 		wordSize = 800
-		temperature = 0.9
+		temperature = 0.8
 	}
 
 	// start := time.Now()
 	params := map[string]interface{}{
 		"model":  "text-davinci-003",
 		"prompt": msg,
-		// 影响回复速度和内容长度。小则快，但是可能内容短。
+		// 影响回复速度和内容长度。小则快，但内容短，可能是截断的。
 		"max_tokens": wordSize * 3,
 		// 0-1，默认1，越高越有创意
 		"temperature": temperature,

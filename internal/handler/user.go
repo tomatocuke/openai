@@ -62,7 +62,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 
-			result := gpt.Query(msg, timeout)
+			result := gpt.Query(true, msg, timeout)
 			ch <- result
 
 			// 定期关闭
@@ -86,21 +86,13 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 
 func Test(w http.ResponseWriter, r *http.Request) {
 	msg := r.URL.Query().Get("msg")
-	s := gpt.Query(msg, time.Second*30)
-	echo(w, []byte(s))
-}
-
-func SetMode(w http.ResponseWriter, r *http.Request) {
 	mode := r.URL.Query().Get("mode")
-	switch mode {
-	case "1":
-		gpt.CurrentMode = gpt.FastMode
-	case "2":
-		gpt.CurrentMode = gpt.NormalMode
-	case "3":
-		gpt.CurrentMode = gpt.MaxMode
+	isFast := true
+	if mode == "full" {
+		isFast = false
 	}
-	echo(w, []byte("ok"))
+	s := gpt.Query(isFast, msg, time.Second*30)
+	echo(w, []byte(s))
 }
 
 func echo(w http.ResponseWriter, data []byte) {

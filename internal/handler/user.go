@@ -86,7 +86,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 
 func Test(w http.ResponseWriter, r *http.Request) {
 	msg := r.URL.Query().Get("msg")
-	s := gpt.Query(msg, time.Second*10)
+	s := gpt.Query(msg, time.Second*30)
 	echo(w, []byte(s))
 }
 

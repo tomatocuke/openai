@@ -18,6 +18,7 @@ const (
 
 var (
 	CurrentMode = FastMode
+	err1        = "The server had an error while processing your request"
 )
 
 type Mode uint8
@@ -60,7 +61,12 @@ func Query(msg string, timeout time.Duration) string {
 		defer close(ch)
 		result, err := completions(msg, time.Second*100)
 		if err != nil {
-			result = err.Error()
+			// 暂不清楚这个错误什么原因，直接重试
+			if strings.HasPrefix(err.Error(), err1) {
+				result, _ = completions(msg, time.Second*100)
+			} else {
+				result = err.Error()
+			}
 		}
 		ch <- result
 		// 超时打印
@@ -90,7 +96,7 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	switch CurrentMode {
 	case FastMode:
 		wordSize = 30 // 中文字符数量
-		temperature = 0.1
+		temperature = 0.2
 	case NormalMode:
 		wordSize = 100
 		temperature = 0.5
@@ -134,7 +140,8 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	var data response
 	json.Unmarshal(body, &data)
 	if len(data.Choices) > 0 {
-		return strings.TrimSpace(data.Choices[0].Text), nil
+		result := strings.TrimPrefix(data.Choices[0].Text, "？")
+		return strings.TrimSpace(result), nil
 	}
 
 	return data.Error.Message, nil

@@ -55,19 +55,22 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		ch = make(chan string)
 		requests.Store(msg.MsgId, ch)
-		go func(id int64, msg string, ctx context.Context) {
-			// 最久第3次要给微信回复，设置超时时间为14秒
-			result := gpt.Query(msg, time.Second*14)
-			select {
-			// 第一次5s已经超时，什么都不做
-			case <-ctx.Done():
-			// 第一次5s及时返回
-			default:
-				ch <- result
-			}
-			requests.Delete(id)
+		go func(id int64, msg string) {
+			// 最久第3次要给微信回复
+			timeout := time.Second * 15
+
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+
+			result := gpt.Query(msg, timeout)
+			ch <- result
+
+			// 定期关闭
+			<-ctx.Done()
 			close(ch)
-		}(msg.MsgId, msg.Content, ctx)
+			requests.Delete(id)
+
+		}(msg.MsgId, msg.Content)
 	} else {
 		ch = v.(chan string)
 	}

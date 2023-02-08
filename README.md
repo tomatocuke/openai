@@ -1,8 +1,8 @@
-### 说明
+### 介绍
 - 功能。通过调用`OpenAI`提供微信公众号自动回复服务。内容仅供参考。(也可忽略微信做个接口)
 - 注意。有别于网页版`ChatGPT`基于GPT-3.5，本项目是调用GPT-3，不够强大。
-- 速度。[微信限制，最久15s做出回复](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)，超时后，前端收到“超时啦”，后端在收到结果后打印日志。
-- 代码。因为功能比较简单，未使用框架，后续可能会优化。
+- 速度。[微信限制，最久15s做出回复](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)，超时后，回复前端“超时啦”，后端在收到结果后打印日志。
+- 代码。因为功能比较简单，未使用框架，后续可能会优化。如果你有问题或者优化点欢迎联系我探讨，github可能不及时查看，加QQ:`772532526`
 
 ### 准备
 - [OpenAI账号](https://beta.openai.com) (需要梯子)
@@ -23,7 +23,7 @@
       # 略
     }
 
-    # 举例9001端口，公众号服务器地址设置为 http://xxx.com/chatgpt/;
+    # 举例9001端口，公众号服务器地址设置为 http://xxx.com/chatgpt/wx; 
     location /chatgpt/ {
       proxy_pass http://127.0.0.1:9001/;
     }
@@ -35,12 +35,9 @@
 > 举例部署端口为 9001
 > 可以不设置 WX_TOKEN，但 API_KEY 是必须的
 
-- Docker 
+- Docker
   ```bash
-  git clone https://github.com/tomatocuke/chatgpt.git
-  cd chatgpt
-  docker build -t chatgpt-wechat .
-  docker run -p 9001:8080 -e API_KEY=xxx -e WX_TOKEN=xxx chatgpt-wechat -d -v $PWD/log:/app/log chatgpt-wechat@latest
+  docker run -p 9001:8080 -e API_KEY=xxx -e WX_TOKEN=xxx chatgpt-wechat -d -v $PWD/log:/app/log tomatocuke/openai
   ```
 - Golang运行
   ```bash 

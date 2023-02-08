@@ -37,7 +37,7 @@
 
 - Docker
   ```bash
-  docker run -p 9001:8080 -e API_KEY=xxx -e WX_TOKEN=xxx chatgpt-wechat -d -v $PWD/log:/app/log tomatocuke/openai
+  docker run -p 9001:8080 -e API_KEY=xxx -e WX_TOKEN=xxx -d -v $PWD/log:/app/log tomatocuke/openai
   ```
 - Golang运行
   ```bash 

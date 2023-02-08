@@ -18,7 +18,6 @@ const (
 
 var (
 	CurrentMode = FastMode
-	err1        = "The server had an error while processing your request"
 )
 
 type Mode uint8
@@ -61,12 +60,7 @@ func Query(msg string, timeout time.Duration) string {
 		defer close(ch)
 		result, err := completions(msg, time.Second*100)
 		if err != nil {
-			// 暂不清楚这个错误什么原因，直接重试
-			if strings.HasPrefix(err.Error(), err1) {
-				result, _ = completions(msg, time.Second*100)
-			} else {
-				result = err.Error()
-			}
+			result = "发生错误「" + err.Error() + "」，您重试一下"
 		}
 		ch <- result
 		// 超时打印

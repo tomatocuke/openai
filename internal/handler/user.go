@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -62,7 +63,8 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 
-			result := gpt.Query(true, msg, timeout)
+			isFast := !strings.Contains(msg, "代码") && !strings.Contains(msg, "详细")
+			result := gpt.Query(isFast, msg, timeout)
 			ch <- result
 
 			// 定期关闭

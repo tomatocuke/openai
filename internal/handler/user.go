@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"chatgpt/config"
-	"chatgpt/internal/service/gpt"
-	"chatgpt/internal/service/wechat"
 	"context"
 	"io"
 	"log"
 	"net/http"
+	"openai/config"
+	"openai/internal/service/gpt"
+	"openai/internal/service/wechat"
 	"strings"
 	"sync"
 	"time"

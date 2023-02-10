@@ -2,12 +2,12 @@ package gpt
 
 import (
 	"bytes"
-	"chatgpt/config"
 	"context"
 	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"openai/config"
 	"strings"
 	"sync"
 	"time"

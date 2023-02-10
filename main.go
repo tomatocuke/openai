@@ -1,15 +1,16 @@
 package main
 
 import (
-	"chatgpt/bootstrap"
-	"chatgpt/config"
-	"chatgpt/internal/handler"
 	"fmt"
 	"log"
 	"net/http"
+	"openai/bootstrap"
+	"openai/config"
+	"openai/internal/handler"
 	"os"
 )
 
+// GO版本如果不一样，直接改go.mod即可
 func main() {
 	r := bootstrap.New()
 

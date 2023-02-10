@@ -1,7 +1,8 @@
+### 最近持续优化中，喜欢的同学给个🌟关注一下
 ### 介绍
 - 功能。通过调用`OpenAI`提供微信公众号自动回复服务。内容可能及其离谱，仅供参考。
 - 注意。有别于网页版`ChatGPT`基于GPT-3.5，本项目是调用GPT-3，没那么强大。
-- 缺陷。不支持上下文；[微信限制，最久15s做出回复](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)，如果超时，可以过一会儿再问一下 (缓存结果)  
+- 缺陷。不支持上下文；[微信限制，最久15s做出回复](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)，可能超时，可以过一会儿再问一下 (缓存结果)  
 - 代码。因为功能比较简单，未使用框架，后续可能会优化。如果你有问题或者优化点欢迎联系我探讨，github可能不及时查看，加QQ:`772532526`
 
 ### 准备

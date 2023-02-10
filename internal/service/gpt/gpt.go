@@ -50,28 +50,28 @@ func Query(isFast bool, msg string, timeout time.Duration) string {
 			result = "发生错误「" + err.Error() + "」，您重试一下"
 		}
 		ch <- result
-		// 超时打印
+		// 超时，内容未通过接口及时回复，打印内容及总用时
 		since := time.Since(start)
 		if since > timeout {
-			log.Printf(" 「%s」-「%s」，用时%ds，", msg, result, int(since.Seconds()))
+			log.Printf("超时%ds，「%s」-「%s」\n", int(since.Seconds()), msg, result)
 		}
 	}()
 
 	var result string
 	select {
 	case result = <-ch:
-		log.Printf(" 「%s」-「%s」，用时%ds，", msg, result, int(time.Since(start).Seconds()))
 	case <-ctx.Done():
 		result = "超时啦"
-		log.Printf("超时「%s」", msg)
 	}
+
+	log.Printf("用时%ds，「%s」-「%s」\n", int(time.Since(start).Seconds()), msg, result)
 
 	return result
 }
 
 // https://beta.openai.com/docs/api-reference/making-requests
 func completions(isFast bool, msg string, timeout time.Duration) (string, error) {
-	wordSize := 30 // 中文字符数量
+	wordSize := 35 // 中文字符数量
 	temperature := 0.3
 
 	if !isFast {
@@ -90,7 +90,7 @@ func completions(isFast bool, msg string, timeout time.Duration) (string, error)
 		// "top_p":             1,
 		// "frequency_penalty": 0,
 		// "presence_penalty":  0,
-		// "stop":              "\n",
+		// "stop": "。",
 	}
 
 	bs, _ := json.Marshal(params)

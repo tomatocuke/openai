@@ -57,8 +57,8 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		ch = make(chan string)
 		requests.Store(msg.MsgId, ch)
 		go func(id int64, msg string) {
-			// 最久第3次要给微信回复
-			timeout := time.Second * 15
+			// 15s不回复微信，则失效
+			timeout := time.Second * 14
 
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()

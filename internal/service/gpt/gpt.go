@@ -9,11 +9,17 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
 const (
 	api = "https://api.openai.com/v1/completions"
+)
+
+var (
+	// 结果缓存（主要用于超时，用户重新提问后能给出答案）
+	resultCache sync.Map
 )
 
 type response struct {
@@ -43,6 +49,11 @@ func Query(isFast bool, msg string, timeout time.Duration) string {
 	ctx, candel := context.WithTimeout(context.Background(), timeout)
 	defer candel()
 
+	cacheVal, ok := resultCache.Load(msg)
+	if ok {
+		return cacheVal.(string)
+	}
+
 	go func() {
 		defer close(ch)
 		result, err := completions(isFast, msg, time.Second*100)
@@ -53,6 +64,8 @@ func Query(isFast bool, msg string, timeout time.Duration) string {
 		// 超时，内容未通过接口及时回复，打印内容及总用时
 		since := time.Since(start)
 		if since > timeout {
+			// TODO定时清理
+			resultCache.Store(msg, result)
 			log.Printf("超时%ds，「%s」-「%s」\n", int(since.Seconds()), msg, result)
 		}
 	}()
@@ -61,12 +74,20 @@ func Query(isFast bool, msg string, timeout time.Duration) string {
 	select {
 	case result = <-ch:
 	case <-ctx.Done():
-		result = "超时啦"
+		result = "超时啦，你等下再问我一遍，我一定告诉你！"
 	}
 
 	log.Printf("用时%ds，「%s」-「%s」\n", int(time.Since(start).Seconds()), msg, result)
 
 	return result
+}
+
+func getFromCache(msg string) string {
+	v, ok := resultCache.Load(msg)
+	if ok {
+		return v.(string)
+	}
+	return ""
 }
 
 // https://beta.openai.com/docs/api-reference/making-requests

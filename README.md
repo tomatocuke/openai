@@ -6,7 +6,7 @@
 - 代码。因为功能比较简单，未使用框架，后续可能会优化。如果你有问题或者优化点欢迎联系我探讨，github可能不及时查看，加QQ:`772532526`
 
 ### 准备
-- [OpenAI账号](https://beta.openai.com) (需要梯子)
+- [OpenAI账号](https://beta.openai.com) (需要梯子,接口不是完全免费，只是初始赠送金额，具体看官方文档)
 - [微信公众号](https://mp.weixin.qq.com/)
 - 服务器、域名、`Docker`或`Golang`环境
 

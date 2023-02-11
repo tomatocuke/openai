@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"openai/bootstrap"
-	"openai/config"
+	"openai/internal/config"
 	"openai/internal/handler"
 	"os"
 )
@@ -15,9 +15,9 @@ func main() {
 	r := bootstrap.New()
 
 	// 微信消息处理
-	r.POST("/wx", handler.ReceiveMsg)
+	r.POST("/", handler.ReceiveMsg)
 	// 用于公众号自动验证
-	r.GET("/wx", handler.WechatCheck)
+	r.GET("/", handler.WechatCheck)
 	// 用于测试 curl "http://127.0.0.1:$PORT/test"
 	r.GET("/test", handler.Test)
 
@@ -32,7 +32,7 @@ func main() {
 
 func SetLog() {
 	dir := "./log"
-	file := dir + "/chatgpt.log"
+	file := dir + "/data.log"
 	_, err := os.Stat(dir)
 	if err != nil && os.IsNotExist(err) {
 		os.Mkdir(dir, 0755)

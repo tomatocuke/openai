@@ -5,8 +5,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"openai/config"
-	"openai/internal/service/gpt"
+	"openai/internal/config"
+	"openai/internal/service/openai"
 	"openai/internal/service/wechat"
 	"strings"
 	"sync"
@@ -64,7 +64,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 			defer cancel()
 
 			isFast := !strings.Contains(msg, "代码") && !strings.Contains(msg, "详细")
-			result := gpt.Query(isFast, msg, timeout)
+			result := openai.Query(isFast, msg, timeout)
 			ch <- result
 
 			// 定期关闭
@@ -93,12 +93,12 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	if mode == "full" {
 		isFast = false
 	}
-	s := gpt.Query(isFast, msg, time.Second*30)
+	s := openai.Query(isFast, msg, time.Second*30)
 	echo(w, []byte(s))
 }
 
 func echo(w http.ResponseWriter, data []byte) {
-	w.Header().Set("Content-Type", "chatgptlication/xml; charset=utf-8")
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }

@@ -6,7 +6,7 @@
 - 有什么不足？ 
   1. 回复内容准确度仅供参考，更适合开放性问题。 
   2. 不支持上下文。
-  3. 速度和回复长度很难兼得。[微信限制，最久15s做出回复](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)，回复可能超时或者是截断的。(做了缓存优化，可稍等再次提问直接获得答案)
+  3. 速度和回复长度很难兼得。[微信限制，最久15s做出回复](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)，回复可能超时或者是截断的。(做了缓存优化，可稍等约30s复制这个问题再次提问，可直接获得答案)
 - 体验。关注公众号`杠点杠`尝试提问，这仅是个人娱乐号，不推送。
 
 ### 二、部署

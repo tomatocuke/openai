@@ -6,7 +6,8 @@ import (
 	"io"
 	"log"
 	"os"
-	"sync"
+	"strconv"
+	"strings"
 
 	"github.com/tomatocuke/sieve"
 )
@@ -15,49 +16,34 @@ var (
 	instance = sieve.New()
 )
 
-var (
-	dir       = "./keyword/"
-	filenames = []string{"色情辱骂.txt", "政治.txt", "违法广告.txt"}
-)
-
 func init() {
-	go func() {
-		var ok bool = true
-		wg := &sync.WaitGroup{}
-		wg.Add(len(filenames))
-		for _, name := range filenames {
-			go func(name string, wg *sync.WaitGroup) {
-				defer wg.Done()
-				name = dir + name
-
-				f, err := os.OpenFile(name, os.O_RDONLY, 0755)
-				if err != nil {
-					ok = false
-					return
-				}
-
-				var arr []string
-				br := bufio.NewReader(f)
-				for {
-					a, _, c := br.ReadLine()
-					if c == io.EOF {
-						break
-					}
-					arr = append(arr, string(a))
-				}
-
-				instance.Add(arr)
-
-			}(name, wg)
+	f, err := os.Open("./keyword.txt")
+	if err != nil {
+		fmt.Println("加载词典失败")
+		return
+	}
+	var arr []string
+	var builder strings.Builder
+	builder.Grow(10)
+	br := bufio.NewReader(f)
+	for {
+		a, _, c := br.ReadLine()
+		if c == io.EOF {
+			break
 		}
-		wg.Wait()
 
-		if ok {
-			fmt.Println("敏感词加载完成")
-		} else {
-			fmt.Println("加载词典失败，不影响使用。")
+		runes := strings.Split(string(a), " ")
+
+		for _, w := range runes {
+			i, _ := strconv.Atoi(w)
+			builder.WriteRune(rune(i))
 		}
-	}()
+		arr = append(arr, builder.String())
+		builder.Reset()
+	}
+
+	instance.Add(arr)
+
 }
 
 func Check(text string) string {

@@ -16,7 +16,7 @@ import (
 
 var (
 	success  = []byte("success")
-	warn     = []byte("警告，检测到敏感词")
+	warn     = "警告，检测到敏感词"
 	requests sync.Map // K - 消息ID ， V - chan string
 )
 
@@ -33,7 +33,7 @@ func WechatCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("微信接入校验失败")
+	log.Println("此接口为公众号验证访问，公众号接入校验失败")
 }
 
 // https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html
@@ -50,7 +50,8 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if fiter.Check(msg.Content) != "" {
-		echo(w, warn)
+		warnWx := msg.GenerateEchoData(warn)
+		echo(w, warnWx)
 		return
 	}
 
@@ -87,8 +88,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	select {
 	case result := <-ch:
 		if fiter.Check(result) != "" {
-			echo(w, warn)
-			return
+			result = warn
 		}
 		bs := msg.GenerateEchoData(result)
 		echo(w, bs)
@@ -105,7 +105,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		isFast = false
 	}
 	if fiter.Check(msg) != "" {
-		echo(w, warn)
+		echo(w, []byte(warn))
 		return
 	}
 	s := openai.Query(isFast, msg, time.Second*30)

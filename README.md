@@ -38,7 +38,7 @@
       }
     }
     ```
-    重新加载nginx配置`nginx -s reload`后，公众号服务器地址填写: `http://xxx.com/`。(设置失败的话，`curl 'http://xxx.com/test?msg=中国在哪个洲'看看公网能不能访问)
+    重新加载nginx配置`nginx -s reload`后，公众号服务器地址填写: `http://xxx.com/`。(设置失败的话，`curl 'http://xxx.com/test?msg=中国在哪个洲'` 看看公网能不能访问)
     启用公众号服务器配置  (初次设置可能要等待2分钟生效）
 
 

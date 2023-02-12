@@ -86,6 +86,10 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case result := <-ch:
+		if fiter.Check(result) != "" {
+			echo(w, warn)
+			return
+		}
 		bs := msg.GenerateEchoData(result)
 		echo(w, bs)
 	// 超时不要回答，会重试的

@@ -13,8 +13,8 @@
 ### 二、部署
 1. 获取`API_KEY`。[OpenAI](https://beta.openai.com/account/api-keys) （如果访问被拒绝，注意全局代理，打开调试，Application清除LocalStorage后刷新，实测可以）
 2. 获取微信公众号`令牌Token`：[微信公众平台](https://mp.weixin.qq.com/)->基本配置->服务器配置->令牌(Token)  (不使用公众号可调过)
-3. 使用以上参数启动服务，两种方式都可以。(此处举例端口9001，如果用公众号且无域名须用80端口)
-  - Docker (镜像<20M)
+3. 使用以上参数启动服务，以下两种方式选其一部署。(此处举例端口9001，如果用公众号且无域名须用80端口)
+  - Docker
     ```bash
     docker run -p 9001:8080 -e API_KEY=xxx -e WX_TOKEN=xxx -d -v $PWD/log:/app/log tomatocuke/openai
     ```
@@ -34,16 +34,17 @@
       listen 80;
       server_name xxx.com; #你的域名
 
-      location /openai/ {
+      location / {
         proxy_pass http://127.0.0.1:9001/; # 服务端口号
       }
     }
     ```
-    `nginx -s reload`后，公众号服务器地址填写: `http://xxx.com/openai/`
+    重新加载nginx配置`nginx -s reload`后，公众号服务器地址填写: `http://xxx.com/`。(设置失败的话，`curl 'http://xxx.com/test?msg=中国在哪个洲'` 看看公网能不能访问)
+    启用公众号服务器配置  (初次设置可能要等待2分钟生效）
 
 
 ### 三、其他
 - 模式。
   1. 默认是较快模式，适合比较具体的问题如`地球的周长`、`光速是多少`，答案简短些的。  
-  2. 如果需要非常开放或比较长的内容时，例如希望评价三体，公众号问题里包含“详细”，问`评价一下三体，详细点`。test接口增加`mode=full`参数 `curl 'http://xxx.com/openai/test?msg=评价一下三体&mode=full'`。 (这种不太友好待优化)
+  2. 如果需要非常开放或比较长的内容时，例如希望评价三体，公众号问题里包含'详细'两个字，例如问`详细评价一下三体`。test接口增加`mode=full`参数 `curl 'http://xxx.com/openai/test?msg=评价一下三体&mode=full'`。 (这种不太友好待优化)
 - 有什么问题我github可能不及时查看，加QQ:`772532526`

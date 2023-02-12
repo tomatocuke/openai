@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"openai/internal/config"
+	"openai/internal/service/fiter"
 	"openai/internal/service/openai"
 	"openai/internal/service/wechat"
 	"strings"
@@ -15,6 +16,7 @@ import (
 
 var (
 	success  = []byte("success")
+	warn     = []byte("警告，检测到敏感词")
 	requests sync.Map // K - 消息ID ， V - chan string
 )
 
@@ -44,6 +46,11 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	if !msg.IsText() {
 		log.Println("非文本不回复")
 		echo(w, success)
+		return
+	}
+
+	if fiter.Check(msg.Content) != "" {
+		echo(w, warn)
 		return
 	}
 
@@ -92,6 +99,10 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	isFast := true
 	if mode == "full" {
 		isFast = false
+	}
+	if fiter.Check(msg) != "" {
+		echo(w, warn)
+		return
 	}
 	s := openai.Query(isFast, msg, time.Second*30)
 	echo(w, []byte(s))

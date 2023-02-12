@@ -13,7 +13,7 @@
 1. 获取`API_KEY`。[OpenAI](https://beta.openai.com/account/api-keys) （如果访问被拒绝，注意全局代理，打开调试，Application清除LocalStorage后刷新，实测可以）
 2. 获取微信公众号`令牌Token`：[微信公众平台](https://mp.weixin.qq.com/)->基本配置->服务器配置->令牌(Token)  (不使用公众号可调过)
 3. 使用以上参数启动服务，两种方式都可以。(此处举例端口9001，如果用公众号且无域名须用80端口)
-  - Docker
+  - Docker (镜像<20M)
     ```bash
     docker run -p 9001:8080 -e API_KEY=xxx -e WX_TOKEN=xxx -d -v $PWD/log:/app/log tomatocuke/openai
     ```

@@ -107,17 +107,20 @@ func Query(msg string, timeout time.Duration) string {
 func completions(msg string, timeout time.Duration) (string, error) {
 	// 提问方式不好，导致回复内容是补全，而不像回答。浪费token
 	length := len([]rune(msg))
+	maxTokens := 2048
 	if length <= 3 {
 		msg = "30字以内说说:" + msg
+		maxTokens = 120
 	} else if length <= 5 {
 		msg = "99字以内说说:" + msg
+		maxTokens = 330
 	}
 	// fmt.Println("openai请求内容：", msg)
 	params := map[string]interface{}{
 		"model":  "text-davinci-003",
 		"prompt": msg,
 		// 影响回复速度和内容长度。  回复长度耗费token，影响花费的金额
-		"max_tokens": 2048,
+		"max_tokens": maxTokens,
 		// 0-1，默认1，越高越有创意
 		"temperature": 0.8,
 		// "top_p":             1,

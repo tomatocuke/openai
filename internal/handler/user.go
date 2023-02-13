@@ -49,11 +49,11 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 敏感词检测
-	if !fiter.Check(msg.Content) {
-		warnWx := msg.GenerateEchoData(warn)
-		echo(w, warnWx)
-		return
-	}
+	// if !fiter.Check(msg.Content) {
+	// 	warnWx := msg.GenerateEchoData(warn)
+	// 	echo(w, warnWx)
+	// 	return
+	// }
 
 	// 5s超时
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -86,9 +86,9 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case result := <-ch:
-		if !fiter.Check(result) {
-			result = warn
-		}
+		// if !fiter.Check(result) {
+		// 	result = warn
+		// }
 		bs := msg.GenerateEchoData(result)
 		echo(w, bs)
 	// 超时不要回答，会重试的

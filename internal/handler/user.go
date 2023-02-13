@@ -49,7 +49,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 敏感词检测
-	if fiter.Check(msg.Content) != "" {
+	if !fiter.Check(msg.Content) {
 		warnWx := msg.GenerateEchoData(warn)
 		echo(w, warnWx)
 		return
@@ -86,7 +86,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case result := <-ch:
-		if fiter.Check(result) != "" {
+		if !fiter.Check(result) {
 			result = warn
 		}
 		bs := msg.GenerateEchoData(result)
@@ -98,7 +98,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 
 func Test(w http.ResponseWriter, r *http.Request) {
 	msg := r.URL.Query().Get("msg")
-	if fiter.Check(msg) != "" {
+	if !fiter.Check(msg) {
 		echo(w, []byte(warn))
 		return
 	}

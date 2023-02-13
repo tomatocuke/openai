@@ -1,5 +1,5 @@
 .vscode
 .DS_Store
 build.sh
-openai
-log
+openaiBin
+log/*

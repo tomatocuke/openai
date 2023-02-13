@@ -46,10 +46,10 @@ func init() {
 
 }
 
-func Check(text string) string {
+func Check(text string) bool {
 	s, _ := instance.Search(text)
 	if s != "" {
 		log.Println("敏感词:", s, text)
 	}
-	return s
+	return s == ""
 }

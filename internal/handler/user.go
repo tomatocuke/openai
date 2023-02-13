@@ -9,7 +9,6 @@ import (
 	"openai/internal/service/fiter"
 	"openai/internal/service/openai"
 	"openai/internal/service/wechat"
-	"strings"
 	"sync"
 	"time"
 )
@@ -49,6 +48,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 敏感词检测
 	if fiter.Check(msg.Content) != "" {
 		warnWx := msg.GenerateEchoData(warn)
 		echo(w, warnWx)
@@ -71,8 +71,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 
-			isFast := !strings.Contains(msg, "代码") && !strings.Contains(msg, "详细")
-			result := openai.Query(isFast, msg, timeout)
+			result := openai.Query(msg, timeout)
 			ch <- result
 
 			// 定期关闭
@@ -99,16 +98,11 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 
 func Test(w http.ResponseWriter, r *http.Request) {
 	msg := r.URL.Query().Get("msg")
-	mode := r.URL.Query().Get("mode")
-	isFast := true
-	if mode == "full" {
-		isFast = false
-	}
 	if fiter.Check(msg) != "" {
 		echo(w, []byte(warn))
 		return
 	}
-	s := openai.Query(isFast, msg, time.Second*30)
+	s := openai.Query(msg, time.Second*30)
 	echo(w, []byte(s))
 }
 

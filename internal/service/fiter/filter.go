@@ -44,6 +44,9 @@ func init() {
 
 	instance.Add(arr)
 
+	// fmt.Println(instance.Search("不想被遗忘"))
+	// fmt.Println(instance.Search("什么方法"))
+
 }
 
 func Check(text string) bool {

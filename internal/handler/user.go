@@ -17,6 +17,7 @@ var (
 	success  = []byte("success")
 	warn     = "警告，检测到敏感词"
 	requests sync.Map // K - 消息ID ， V - chan string
+	// users    sync.Map
 )
 
 func WechatCheck(w http.ResponseWriter, r *http.Request) {
@@ -49,11 +50,11 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 敏感词检测
-	// if !fiter.Check(msg.Content) {
-	// 	warnWx := msg.GenerateEchoData(warn)
-	// 	echo(w, warnWx)
-	// 	return
-	// }
+	if !fiter.Check(msg.Content) {
+		warnWx := msg.GenerateEchoData(warn)
+		echo(w, warnWx)
+		return
+	}
 
 	// 5s超时
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -86,9 +87,9 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case result := <-ch:
-		// if !fiter.Check(result) {
-		// 	result = warn
-		// }
+		if !fiter.Check(result) {
+			result = warn
+		}
 		bs := msg.GenerateEchoData(result)
 		echo(w, bs)
 	// 超时不要回答，会重试的
@@ -102,8 +103,9 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echo(w, []byte(warn))
 		return
 	}
-	s := openai.Query(msg, time.Second*30)
-	echo(w, []byte(s))
+	s := openai.Query(msg, time.Second*80)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(s))
 }
 
 func echo(w http.ResponseWriter, data []byte) {

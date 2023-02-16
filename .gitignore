@@ -3,3 +3,5 @@
 build.sh
 openaiBin
 log/*
+myconf.yaml
+test.html

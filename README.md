@@ -3,10 +3,11 @@
 ### 一、介绍
 - 能干什么？ 通过调用`OpenAI`的接口智能回答问题。(API调用 或 用作公众号自动回复)
 - 是`ChatGPT`吗？  不是。`ChatGPT`基于GPT-3.5，本项目是调用GPT-3，有很大差距。现在`ChatGPT`还没开放接口，安全限制很高，现有市面基本都是此类冒充的。
+- 免费吗？不算，`OpenAI`账号赠送18$，限期使用。 消耗根据问题和回复长度计算。
 - 有什么不足？ 
   - 回复内容准确度仅供参考，更适合开放性问题。 
-  - 不支持上下文。
-  - 速度和回复长度很难兼得。[微信限制，最久15s做出回复](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)，回复可能超时或者是截断的。(做了缓存优化，可稍等再次提问直接获得答案)
+  - 不支持上下文。 (也方便做，但是花费更多的tokens）
+  - 速度和回复长度很难兼得。如果是订阅号，只能被动回复，[限制最久15s做出回复](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)，回复可能超时或者是截断的(做了缓存优化，可稍等再次提问直接获得答案)  。 非订阅号，48小时内有20条主动回复额度，这个版本也开发了，在dev分支，还不稳定。 
 - 内容安全。我做了[敏感词检测](https://github.com/tomatocuke/sieve)
 - 体验。关注公众号`杠点杠`尝试提问，这仅是个人娱乐号，不推送。
 
@@ -45,3 +46,4 @@
 
 ### 三、其他
 - 有什么问题我github可能不及时查看，加QQ:`772532526`
+- 寻求一份杭州的Golang开发工作，HTTP方面。

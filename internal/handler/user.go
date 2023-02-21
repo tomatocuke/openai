@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -33,7 +34,7 @@ func WechatCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("此接口为公众号验证访问，公众号接入校验失败")
+	log.Println("此接口为公众号验证，不应该被手动调用，公众号接入校验失败")
 }
 
 // https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html
@@ -100,12 +101,28 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 func Test(w http.ResponseWriter, r *http.Request) {
 	msg := r.URL.Query().Get("msg")
 	if !fiter.Check(msg) {
-		echo(w, []byte(warn))
+		echoJson(w, "", warn)
 		return
 	}
-	s := openai.Query(msg, time.Second*80)
+	s := openai.Query(msg, time.Second*180)
+	echoJson(w, s, "")
+}
+
+func echoJson(w http.ResponseWriter, replyMsg string, errMsg string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(s))
+
+	var code int
+	var message = replyMsg
+	if errMsg != "" {
+		code = -1
+		message = errMsg
+	}
+	data, _ := json.Marshal(map[string]interface{}{
+		"code":    code,
+		"message": message,
+	})
+	w.Write(data)
 }
 
 func echo(w http.ResponseWriter, data []byte) {

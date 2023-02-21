@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"openai/internal/config"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -76,7 +78,7 @@ func Query(msg string, timeout time.Duration) string {
 	go func(msg string, timeout time.Duration) {
 		defer close(ch)
 		// 调用openai的超时时间设置大一些
-		result, err := completions(msg, time.Second*100)
+		result, err := completions(msg, time.Second*180)
 		if err != nil {
 			result = "发生错误「" + err.Error() + "」，您重试一下"
 		}
@@ -105,22 +107,17 @@ func Query(msg string, timeout time.Duration) string {
 
 // https://beta.openai.com/docs/api-reference/making-requests
 func completions(msg string, timeout time.Duration) (string, error) {
-	// 提问方式不好，导致回复内容是补全，而不像回答。浪费token
-	length := len([]rune(msg))
-	maxTokens := 2048
-	if length <= 3 {
-		msg = "30字以内说说:" + msg
-		maxTokens = 120
-	} else if length <= 5 {
-		msg = "99字以内说说:" + msg
-		maxTokens = 330
+	msg, wordSize := queryMsg(msg)
+	if wordSize == 0 {
+		return "请说详细些...", nil
 	}
+
 	// fmt.Println("openai请求内容：", msg)
 	params := map[string]interface{}{
 		"model":  "text-davinci-003",
 		"prompt": msg,
 		// 影响回复速度和内容长度。  回复长度耗费token，影响花费的金额
-		"max_tokens": maxTokens,
+		"max_tokens": wordSize * 3,
 		// 0-1，默认1，越高越有创意
 		"temperature": 0.8,
 		// "top_p":             1,
@@ -150,17 +147,72 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	var data response
 	json.Unmarshal(body, &data)
 	if len(data.Choices) > 0 {
-		start := 0
-		for i, w := range data.Choices[0].Text {
-			if !isSymbaol(w) {
-				start = i
-				break
-			}
-		}
-		return data.Choices[0].Text[start:], nil
+		return replyMsg(data.Choices[0].Text), nil
 	}
 
 	return data.Error.Message, nil
+}
+
+func queryMsg(prompt string) (string, int) {
+	msg := strings.TrimSpace(prompt)
+	wordSize := 0
+	length := len([]rune(msg))
+	if length <= 1 {
+		wordSize = 0
+	} else if length <= 3 {
+		msg = "30字以内说说:" + msg
+		wordSize = 30
+	} else if length <= 5 {
+		msg = "99字以内说说:" + msg
+		wordSize = 100
+	} else {
+		// 默认400字以内
+		wordSize = 400
+	}
+
+	// 检查规定 xx字
+	if idx := strings.IndexRune(msg, '字'); idx > -1 {
+		if idx > 3 && string(msg[idx-3:idx]) == "个" {
+			idx -= 3
+		}
+		end := idx
+		start := idx
+		for i := idx - 1; i >= 0; i-- {
+			if msg[i] <= '9' && msg[i] >= '0' {
+				start = i
+			} else {
+				break
+			}
+		}
+
+		if start != end {
+			wordSize, _ = strconv.Atoi(msg[start:end])
+			if wordSize == 0 {
+				wordSize = 400
+			} else if wordSize > 800 {
+				wordSize = 800
+			}
+		}
+
+	}
+
+	return msg, wordSize
+}
+
+func replyMsg(reply string) string {
+	idx := strings.Index(reply, "\n\n")
+	if idx > -1 && reply[len(reply)-2] != '\n' {
+		reply = reply[idx+2:]
+	}
+	start := 0
+	for i, v := range reply {
+		if !isSymbaol(v) {
+			start = i
+			break
+		}
+	}
+
+	return reply[start:]
 }
 
 var symbols = []rune{'\n', ' ', '，', '。', '？', '?', ',', '.', '!', '！', ':', '：'}
@@ -168,7 +220,6 @@ var symbols = []rune{'\n', ' ', '，', '。', '？', '?', ',', '.', '!', '！', 
 func isSymbaol(w rune) bool {
 	for _, v := range symbols {
 		if v == w {
-			// fmt.Println("symbol", string(w))
 			return true
 		}
 	}

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -57,30 +56,16 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5s超时
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
 	var ch chan string
 	v, ok := requests.Load(msg.MsgId)
 	if !ok {
+		log.Println("Q:", msg.Content)
 		ch = make(chan string)
 		requests.Store(msg.MsgId, ch)
 		go func(id int64, msg string) {
 			// 15s不回复微信，则失效
-			timeout := time.Second * 14
-
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-
-			result := openai.Query(msg, timeout)
+			result := openai.Query(msg, time.Second*14)
 			ch <- result
-
-			// 定期关闭
-			<-ctx.Done()
-			close(ch)
-			requests.Delete(id)
-
 		}(msg.MsgId, msg.Content)
 	} else {
 		ch = v.(chan string)
@@ -93,8 +78,10 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		}
 		bs := msg.GenerateEchoData(result)
 		echo(w, bs)
+		close(ch)
+		requests.Delete(msg.MsgId)
 	// 超时不要回答，会重试的
-	case <-ctx.Done():
+	case <-time.After(time.Second * 5):
 	}
 }
 

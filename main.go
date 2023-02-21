@@ -10,7 +10,6 @@ import (
 	"os"
 )
 
-// GO版本如果不一样，直接改go.mod即可
 func main() {
 	r := bootstrap.New()
 

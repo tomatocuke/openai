@@ -55,7 +55,6 @@ type choiceItem struct {
 // OpenAI可能无法在希望的时间内做出回复
 // 使用goroutine + channel 的形式，不管是否能及时回复用户，后台都打印结果
 func Query(msg string, timeout time.Duration) string {
-	start := time.Now()
 	ch := make(chan string, 1)
 	ctx, candel := context.WithTimeout(context.Background(), timeout)
 	defer candel()
@@ -75,32 +74,29 @@ func Query(msg string, timeout time.Duration) string {
 
 	resultCache.Store(msg, MsgWait)
 
-	go func(msg string, timeout time.Duration) {
-		defer close(ch)
-		// 调用openai的超时时间设置大一些
+	go func(msg string, ctx context.Context, ch chan string) {
+		start := time.Now()
 		result, err := completions(msg, time.Second*180)
 		if err != nil {
 			result = "发生错误「" + err.Error() + "」，您重试一下"
 		}
-		ch <- result
-		// 超时，内容未通过接口及时回复，打印内容及总用时
-		since := time.Since(start)
-		if since > timeout {
+		select {
+		case <-ctx.Done():
 			resultCache.Store(msg, result)
-			log.Printf("超时，用时%ds，「%s」 \n %s \n\n", int(since.Seconds()), msg, result)
-		} else {
+		default:
+			ch <- result
 			resultCache.Delete(msg)
 		}
-	}(msg, timeout)
+		close(ch)
+		log.Printf("用时%ds，「%s」 \n %s \n\n", int(time.Since(start).Seconds()), msg, result)
+	}(msg, ctx, ch)
 
 	var result string
 	select {
 	case result = <-ch:
 	case <-ctx.Done():
-		result = "超时啦，请稍等20-60s后再问我「" + msg + "」，就告诉你。"
+		result = "超时啦，请稍等20-60s后再问我，就告诉你。"
 	}
-
-	log.Printf("用时%ds，「%s」 \n %s \n\n", int(time.Since(start).Seconds()), msg, result)
 
 	return result
 }

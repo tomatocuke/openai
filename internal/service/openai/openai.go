@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	api     = "https://api.openai.com/v1/completions"
+	api     = "https://api.openai.com/v1/chat/completions"
 	MsgWait = "这个问题比较复杂，再稍等一下～"
 )
 
@@ -33,8 +33,22 @@ func init() {
 	}()
 }
 
+type request struct {
+	Model    string       `json:"model"`
+	Messages []reqMessage `json:"messages"`
+}
+type reqMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
 type response struct {
-	ID string `json:"id"`
+	ID    string `json:"id"`
+	Usage struct {
+		PromptTokens     int `json:"prompt_tokens"`
+		CompletionTokens int `json:"completion_tokens"`
+		TotalTokens      int `json:"total_tokens"`
+	} `json:"usage"`
 	// Object  string                 `json:"object"`
 	// Created int                    `json:"created"`
 	// Model   string                 `json:"model"`
@@ -46,10 +60,9 @@ type response struct {
 }
 
 type choiceItem struct {
-	Text string `json:"text"`
-	// Index        int    `json:"index"`
-	// Logprobs     int    `json:"logprobs"`
-	// FinishReason string `json:"finish_reason"`
+	Message struct {
+		Content string `json:"content"`
+	} `json:"message"`
 }
 
 // OpenAI可能无法在希望的时间内做出回复
@@ -103,26 +116,17 @@ func Query(msg string, timeout time.Duration) string {
 
 // https://beta.openai.com/docs/api-reference/making-requests
 func completions(msg string, timeout time.Duration) (string, error) {
-	msg, wordSize := queryMsg(msg)
-	if wordSize == 0 {
-		return "请说详细些...", nil
-	}
+	var r request
+	r.Model = "gpt-3.5-turbo"
+	r.Messages = []reqMessage{{
+		Role:    "user",
+		Content: strings.TrimSpace(msg),
+	}}
 
-	// fmt.Println("openai请求内容：", msg)
-	params := map[string]interface{}{
-		"model":  "text-davinci-003",
-		"prompt": msg,
-		// 影响回复速度和内容长度。  回复长度耗费token，影响花费的金额
-		"max_tokens": wordSize * 3,
-		// 0-1，默认1，越高越有创意
-		"temperature": 0.8,
-		// "top_p":             1,
-		// "frequency_penalty": 0,
-		// "presence_penalty":  0,
-		// "stop": "。",
+	bs, err := json.Marshal(r)
+	if err != nil {
+		return "", err
 	}
-
-	bs, _ := json.Marshal(params)
 
 	client := &http.Client{Timeout: timeout}
 	req, _ := http.NewRequest("POST", api, bytes.NewReader(bs))
@@ -143,7 +147,8 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	var data response
 	json.Unmarshal(body, &data)
 	if len(data.Choices) > 0 {
-		return replyMsg(data.Choices[0].Text), nil
+		log.Printf("花费token: %d , 请求: %d , 回复: %d \n", data.Usage.TotalTokens, data.Usage.PromptTokens, data.Usage.CompletionTokens)
+		return replyMsg(data.Choices[0].Message.Content), nil
 	}
 
 	return data.Error.Message, nil

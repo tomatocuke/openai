@@ -42,6 +42,11 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	bs, _ := io.ReadAll(r.Body)
 	msg := wechat.NewMsg(bs)
 
+	if msg == nil {
+		echo(w, []byte("xml格式公众号消息接口，请勿手动调用"))
+		return
+	}
+
 	// 非文本不回复(返回success表示不回复)
 	if !msg.IsText() {
 		log.Println("非文本不回复")

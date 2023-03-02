@@ -10,6 +10,10 @@ import (
 	"os"
 )
 
+func init() {
+
+}
+
 func main() {
 	r := bootstrap.New()
 

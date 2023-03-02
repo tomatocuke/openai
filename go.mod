@@ -1,5 +1,5 @@
 module openai
 
-go 1.19
+go 1.16
 
-require github.com/tomatocuke/sieve v0.0.0-20230213101519-d1ed659d7227
+require github.com/tomatocuke/sieve v0.0.0-20230214050111-c2a0441edcdf

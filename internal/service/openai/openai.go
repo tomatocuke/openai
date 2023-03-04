@@ -101,7 +101,7 @@ func Query(msg string, timeout time.Duration) string {
 			resultCache.Delete(msg)
 		}
 		close(ch)
-		log.Printf("用时%ds，「%s」 \n %s \n\n", int(time.Since(start).Seconds()), msg, result)
+		log.Printf("用时%ds，「%s」 \n%s \n\n", int(time.Since(start).Seconds()), msg, result)
 	}(msg, ctx, ch)
 
 	var result string
@@ -116,11 +116,15 @@ func Query(msg string, timeout time.Duration) string {
 
 // https://beta.openai.com/docs/api-reference/making-requests
 func completions(msg string, timeout time.Duration) (string, error) {
+	msg = strings.TrimSpace(msg)
+	if len(msg) <= 1 {
+		return "请说详细些...", nil
+	}
 	var r request
 	r.Model = "gpt-3.5-turbo"
 	r.Messages = []reqMessage{{
 		Role:    "user",
-		Content: strings.TrimSpace(msg),
+		Content: msg,
 	}}
 
 	bs, err := json.Marshal(r)

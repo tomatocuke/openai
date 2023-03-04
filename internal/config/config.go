@@ -27,4 +27,13 @@ func init() {
 	if ServerPort == "" {
 		ServerPort = "8080"
 	}
+	parseConfigFile()
+}
+
+func parseConfigFile() {
+	filename := "./config.yaml"
+	if _, err := os.Stat(filename); err != nil {
+		return
+	}
+
 }

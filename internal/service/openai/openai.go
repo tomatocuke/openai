@@ -21,10 +21,12 @@ const (
 
 var (
 	// 结果缓存（主要用于超时，用户重新提问后能给出答案）
-	resultCache sync.Map
+	resultCache      sync.Map
+	globalMessageMap map[string][]reqMessage
 )
 
 func init() {
+	globalMessageMap = make(map[string][]reqMessage)
 	go func() {
 		ticker := time.NewTicker(time.Hour * 24)
 		for range ticker.C {
@@ -34,8 +36,10 @@ func init() {
 }
 
 type request struct {
-	Model    string       `json:"model"`
-	Messages []reqMessage `json:"messages"`
+	Model       string       `json:"model"`
+	Messages    []reqMessage `json:"messages"`
+	MaxTokens   int          `json:"max_tokens"`
+	Temperature float32      `json:"temperature"`
 }
 type reqMessage struct {
 	Role    string `json:"role"`
@@ -67,7 +71,7 @@ type choiceItem struct {
 
 // OpenAI可能无法在希望的时间内做出回复
 // 使用goroutine + channel 的形式，不管是否能及时回复用户，后台都打印结果
-func Query(msg string, timeout time.Duration) string {
+func Query(msg string, user_name string, timeout time.Duration) string {
 	ch := make(chan string, 1)
 	ctx, candel := context.WithTimeout(context.Background(), timeout)
 	defer candel()
@@ -89,7 +93,8 @@ func Query(msg string, timeout time.Duration) string {
 
 	go func(msg string, ctx context.Context, ch chan string) {
 		start := time.Now()
-		result, err := completions(msg, time.Second*180)
+		result, err := completions(msg, user_name, time.Second*180)
+
 		if err != nil {
 			result = "发生错误「" + err.Error() + "」，您重试一下"
 		}
@@ -115,18 +120,23 @@ func Query(msg string, timeout time.Duration) string {
 }
 
 // https://beta.openai.com/docs/api-reference/making-requests
-func completions(msg string, timeout time.Duration) (string, error) {
+func completions(msg string, username string, timeout time.Duration) (string, error) {
 	msg = strings.TrimSpace(msg)
 	if len(msg) <= 1 {
 		return "请说详细些...", nil
 	}
 	var r request
 	r.Model = "gpt-3.5-turbo"
-	r.Messages = []reqMessage{{
+	// 记录对话
+	if _, ok := globalMessageMap[username]; ok {
+		r.Messages = globalMessageMap[username]
+	}
+	r.Messages = append(r.Messages, reqMessage{
 		Role:    "user",
-		Content: msg,
-	}}
+		Content: msg})
 
+	r.MaxTokens = 600
+	r.Temperature = 1.2
 	bs, err := json.Marshal(r)
 	if err != nil {
 		return "", err
@@ -152,6 +162,24 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	json.Unmarshal(body, &data)
 	if len(data.Choices) > 0 {
 		log.Printf("花费token: %d , 请求: %d , 回复: %d \n", data.Usage.TotalTokens, data.Usage.PromptTokens, data.Usage.CompletionTokens)
+		//添加对话
+		userMessage := reqMessage{
+			Role:    "user",
+			Content: msg}
+
+		if messageArray, ok := globalMessageMap[username]; ok {
+			// 记住最近五条对话
+			if len(messageArray) > 10 {
+				globalMessageMap[username] = globalMessageMap[username][2:]
+			}
+			globalMessageMap[username] = append(globalMessageMap[username], userMessage)
+		} else {
+			globalMessageMap[username] = []reqMessage{userMessage}
+		}
+		globalMessageMap[username] = append(globalMessageMap[username], reqMessage{
+			Role:    "assistant",
+			Content: data.Choices[0].Message.Content})
+
 		return replyMsg(data.Choices[0].Message.Content), nil
 	}
 

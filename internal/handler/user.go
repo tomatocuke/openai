@@ -67,11 +67,11 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		log.Println("Q:", msg.Content)
 		ch = make(chan string)
 		requests.Store(msg.MsgId, ch)
-		go func(id int64, msg string) {
+		go func(id int64, user_name string, msg string) {
 			// 15s不回复微信，则失效
-			result := openai.Query(msg, time.Second*14)
+			result := openai.Query(msg, user_name, time.Second*14)
 			ch <- result
-		}(msg.MsgId, msg.Content)
+		}(msg.MsgId, msg.FromUserName, msg.Content)
 	} else {
 		ch = v.(chan string)
 	}
@@ -96,7 +96,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echoJson(w, "", warn)
 		return
 	}
-	s := openai.Query(msg, time.Second*180)
+	s := openai.Query(msg, "test", time.Second*180)
 	echoJson(w, s, "")
 }
 

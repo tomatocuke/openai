@@ -28,8 +28,8 @@ func main() {
 	// 设置日志
 	SetLog()
 
-	fmt.Printf("启动服务，使用 curl 'http://127.0.0.1:%s/test?msg=中国在哪个洲' 测试一下吧\n", config.ServerPort)
-	if err := http.ListenAndServe(":"+config.ServerPort, r); err != nil {
+	fmt.Printf("启动服务，使用 curl 'http://127.0.0.1:%s/test?msg=你好' 测试一下吧\n", config.C.Http.Port)
+	if err := http.ListenAndServe(":"+config.C.Http.Port, r); err != nil {
 		panic(err)
 	}
 }

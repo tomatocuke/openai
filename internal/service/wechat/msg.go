@@ -11,6 +11,7 @@ type Msg struct {
 	FromUserName string   `xml:"FromUserName"`
 	CreateTime   int64    `xml:"CreateTime"`
 	MsgType      string   `xml:"MsgType"`
+	Event        string   `xml:"Event"`
 	Content      string   `xml:"Content"`
 
 	MsgId int64 `xml:"MsgId,omitempty"`
@@ -22,10 +23,6 @@ func NewMsg(data []byte) *Msg {
 		return nil
 	}
 	return &msg
-}
-
-func (msg *Msg) IsText() bool {
-	return msg.MsgType == "text"
 }
 
 func (msg *Msg) GenerateEchoData(s string) []byte {

@@ -1,39 +1,59 @@
 package config
 
 import (
-	"flag"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 )
 
+type conf struct {
+	Http struct {
+		Port  string `json:"port"`
+		Proxy string `json:"proxy"`
+	} `json:"http"`
+	OpenAI struct {
+		Key string `json:"key"`
+	} `json:"openai"`
+	Wechat struct {
+		Token string `json:"token"`
+	} `json:"wechat"`
+}
+
 var (
-	ServerPort string
-	ApiKey     string
-	WxToken    string
+	C conf
 )
 
 func init() {
-	flag.StringVar(&ServerPort, "PORT", os.Getenv("PORT"), "服务端口号")
-	flag.StringVar(&ApiKey, "API_KEY", os.Getenv("API_KEY"), "OpenAI的API_KEY")
-	flag.StringVar(&WxToken, "WX_TOKEN", os.Getenv("WX_TOKEN"), "微信公众号令牌")
-	flag.Parse()
-	if ApiKey == "" {
-		fmt.Println("API_KEY 不能为空")
+
+	// 尝试加载配置文件，否则使用参数
+	if err := parseConfigFile(); err != nil {
+		fmt.Println("缺少配置文件 config.json")
 		os.Exit(0)
 	}
-	if WxToken == "" {
-		fmt.Println("WX_TOKEN 未设置，不能用于公众号服务")
+
+	if C.OpenAI.Key == "" {
+		fmt.Println("OpenAI的Key不能为空")
+		os.Exit(0)
 	}
-	if ServerPort == "" {
-		ServerPort = "8080"
+
+	if C.Http.Port == "" {
+		C.Http.Port = "9001"
 	}
-	parseConfigFile()
+
+	if C.Wechat.Token == "" {
+		fmt.Println("未设置公众号token，公众号功能不可用")
+	}
+
 }
 
-func parseConfigFile() {
-	filename := "./config.yaml"
-	if _, err := os.Stat(filename); err != nil {
-		return
+func parseConfigFile() error {
+	filename := "./config.json"
+	f, err := os.Open(filename)
+	if err != nil {
+		return err
 	}
-
+	bs, _ := io.ReadAll(f)
+	err = json.Unmarshal(bs, &C)
+	return err
 }

@@ -7,10 +7,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"openai/internal/config"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -18,6 +20,8 @@ const (
 	api     = "https://api.openai.com/v1/chat/completions"
 	MsgWait = "这个问题比较复杂，再稍等一下～"
 )
+
+var totaltokens int64
 
 var (
 	// 结果缓存（主要用于超时，用户重新提问后能给出答案）
@@ -88,7 +92,6 @@ func Query(msg string, timeout time.Duration) string {
 	resultCache.Store(msg, MsgWait)
 
 	go func(msg string, ctx context.Context, ch chan string) {
-		start := time.Now()
 		result, err := completions(msg, time.Second*180)
 		if err != nil {
 			result = "发生错误「" + err.Error() + "」，您重试一下"
@@ -101,14 +104,13 @@ func Query(msg string, timeout time.Duration) string {
 			resultCache.Delete(msg)
 		}
 		close(ch)
-		log.Printf("用时%ds，「%s」 \n%s \n\n", int(time.Since(start).Seconds()), msg, result)
 	}(msg, ctx, ch)
 
 	var result string
 	select {
 	case result = <-ch:
 	case <-ctx.Done():
-		result = "超时啦，请稍等20-60s后再问我，就告诉你。"
+		result = "请稍等10s后复制问题再问我一遍"
 	}
 
 	return result
@@ -116,8 +118,10 @@ func Query(msg string, timeout time.Duration) string {
 
 // https://beta.openai.com/docs/api-reference/making-requests
 func completions(msg string, timeout time.Duration) (string, error) {
+	start := time.Now()
 	msg = strings.TrimSpace(msg)
-	if len(msg) <= 1 {
+	length := len([]rune(msg))
+	if length <= 1 {
 		return "请说详细些...", nil
 	}
 	var r request
@@ -135,7 +139,15 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	client := &http.Client{Timeout: timeout}
 	req, _ := http.NewRequest("POST", api, bytes.NewReader(bs))
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+config.ApiKey)
+	req.Header.Add("Authorization", "Bearer "+config.C.OpenAI.Key)
+
+	// 设置代理
+	if config.C.Http.Proxy != "" {
+		proxyURL, _ := url.Parse(config.C.Http.Proxy)
+		client.Transport = &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+		}
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -151,8 +163,21 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	var data response
 	json.Unmarshal(body, &data)
 	if len(data.Choices) > 0 {
-		log.Printf("花费token: %d , 请求: %d , 回复: %d \n", data.Usage.TotalTokens, data.Usage.PromptTokens, data.Usage.CompletionTokens)
-		return replyMsg(data.Choices[0].Message.Content), nil
+		atomic.AddInt64(&totaltokens, int64(data.Usage.TotalTokens))
+
+		reply := replyMsg(data.Choices[0].Message.Content)
+		log.Printf("本次:用时:%ds，花费token:%d , 请求:%d , 回复:%d。 运行累计花费token:%d，累计金额：%f$ \nQ:%s \nA:%s \n",
+			int(time.Since(start).Seconds()),
+			data.Usage.TotalTokens,
+			data.Usage.PromptTokens,
+			data.Usage.CompletionTokens,
+			totaltokens,
+			float32(totaltokens/1000)*0.002,
+			msg,
+			reply,
+		)
+
+		return reply, nil
 	}
 
 	return data.Error.Message, nil

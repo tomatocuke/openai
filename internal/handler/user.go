@@ -17,7 +17,7 @@ var (
 	success  = []byte("success")
 	warn     = "警告，检测到敏感词"
 	requests sync.Map // K - 消息ID ， V - chan string
-	// users    sync.Map
+	users    sync.Map
 )
 
 func WechatCheck(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +28,7 @@ func WechatCheck(w http.ResponseWriter, r *http.Request) {
 	echostr := query.Get("echostr")
 
 	// 校验
-	if wechat.CheckSignature(signature, timestamp, nonce, config.WxToken) {
+	if wechat.CheckSignature(signature, timestamp, nonce, config.C.Wechat.Token) {
 		w.Write([]byte(echostr))
 		return
 	}
@@ -48,10 +48,27 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 非文本不回复(返回success表示不回复)
-	if !msg.IsText() {
-		log.Println("非文本不回复")
+	switch msg.MsgType {
+	// 未写的类型
+	default:
+		log.Printf("未实现的消息类型%s\n", msg.MsgType)
 		echo(w, success)
-		return
+	case "event":
+		switch msg.Event {
+		default:
+			log.Printf("未实现的事件%s\n", msg.Event)
+			echo(w, success)
+		case "subscribe":
+			log.Println("新增关注:", msg.FromUserName)
+			echo(w, success)
+			return
+		case "unsubscribe":
+			log.Println("取消关注:", msg.FromUserName)
+			echo(w, success)
+			return
+		}
+	case "text":
+
 	}
 
 	// 敏感词检测
@@ -64,12 +81,11 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	var ch chan string
 	v, ok := requests.Load(msg.MsgId)
 	if !ok {
-		log.Println("Q:", msg.Content)
 		ch = make(chan string)
 		requests.Store(msg.MsgId, ch)
 		go func(id int64, msg string) {
 			// 15s不回复微信，则失效
-			result := openai.Query(msg, time.Second*14)
+			result := openai.Query(msg, time.Millisecond*13500)
 			ch <- result
 		}(msg.MsgId, msg.Content)
 	} else {

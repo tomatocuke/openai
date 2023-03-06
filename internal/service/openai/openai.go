@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	api     = "https://api.openai.com/v1/chat/completions"
-	MsgWait = "这个问题比较复杂，再稍等一下～"
+	api          = "https://api.openai.com/v1/chat/completions"
+	MsgWait      = "这个问题比较复杂，再稍等一下～"
+	exchangeRate = 6.9
 )
 
 var totaltokens int64
@@ -166,13 +167,13 @@ func completions(msg string, timeout time.Duration) (string, error) {
 		atomic.AddInt64(&totaltokens, int64(data.Usage.TotalTokens))
 
 		reply := replyMsg(data.Choices[0].Message.Content)
-		log.Printf("本次:用时:%ds，花费token:%d , 请求:%d , 回复:%d。 运行累计花费token:%d，累计金额：%f$ \nQ:%s \nA:%s \n",
+		log.Printf("本次:用时:%ds,花费约:%f¥,token:%d,请求:%d,回复:%d。 服务启动至今累计花费约:%f¥ \nQ:%s \nA:%s \n",
 			int(time.Since(start).Seconds()),
+			float32(data.Usage.TotalTokens/1000)*0.002*exchangeRate,
 			data.Usage.TotalTokens,
 			data.Usage.PromptTokens,
 			data.Usage.CompletionTokens,
-			totaltokens,
-			float32(totaltokens/1000)*0.002,
+			float32(totaltokens/1000)*0.002*exchangeRate,
 			msg,
 			reply,
 		)

@@ -21,7 +21,7 @@
 4. 使用Docker启动服务
   ```bash
   # 运行服务 (举例使用80端口，如果有域名会配置nginx自己修改别的端口号)
-  docker run -d -p 80:80 -v $PWD/log:/app/log -v $PWD/config.json:/app/config.json tomatocuke/openai
+  docker run -d -p 80:80 -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
   # 查看状况
   docker logs 容器ID 
   ```

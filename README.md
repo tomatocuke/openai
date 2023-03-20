@@ -21,12 +21,13 @@
 4. 使用Docker启动服务
   ```bash
   # 运行服务 (举例使用80端口，如果有域名会配置nginx自己修改别的端口号)
+  # 注意这里会拷贝配置到容器里，如果修改配置，需到容器内修改，或者启用新的容器
   docker run -d -p 80:80 -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
   # 查看状况
   docker logs 容器ID 
   ```
-1. 验证服务 `curl 'http://127.0.0.1/test?msg=怎么做锅包肉'` ，查看日志 `tail -f log/data.log`
-2. 公众号配置。 服务器地址(URL)填写 `http://服务器IP/wx`，设置明文方式传输，提交后，点击「启用」。 初次设置生效要等一会，过几分钟关闭再启用试试
+5. 验证服务 `curl 'http://127.0.0.1/test?msg=怎么做锅包肉'` ，查看日志 `tail -f log/data.log`
+6. 公众号配置。 服务器地址(URL)填写 `http://服务器IP/wx`，设置明文方式传输，提交后，点击「启用」。 初次设置生效要等一会，过几分钟关闭再启用试试
     
 
 ### 三、其他

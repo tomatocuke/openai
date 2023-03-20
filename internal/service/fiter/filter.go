@@ -17,39 +17,50 @@ var (
 )
 
 func init() {
-	f, err := os.Open("./keyword.txt")
-	if err != nil {
-		fmt.Println("加载词典失败")
-		return
-	}
-	var arr []string
-	var builder strings.Builder
-	builder.Grow(10)
-	br := bufio.NewReader(f)
-	for {
-		a, _, c := br.ReadLine()
-		if c == io.EOF {
-			break
+
+	go func() {
+		// 加载预定义词典
+		arr := strings.Split(keywords, "\n")
+		var builder strings.Builder
+		builder.Grow(20)
+
+		for _, v := range arr {
+			runes := strings.Split(v, " ")
+			for _, w := range runes {
+				i, _ := strconv.Atoi(w)
+				builder.WriteRune(rune(i))
+			}
+			arr = append(arr, builder.String())
+			builder.Reset()
 		}
 
-		runes := strings.Split(string(a), " ")
+		instance.Add(arr)
 
-		for _, w := range runes {
-			i, _ := strconv.Atoi(w)
-			builder.WriteRune(rune(i))
+		// 加载你定义的词典
+		f, err := os.Open("./keyword.txt")
+		if err != nil {
+			return
 		}
-		arr = append(arr, builder.String())
-		builder.Reset()
-	}
+		arr = arr[:0]
+		br := bufio.NewReader(f)
+		for {
+			a, _, c := br.ReadLine()
+			if c == io.EOF {
+				break
+			}
+			arr = append(arr, string(a))
+		}
 
-	instance.Add(arr)
+		instance.Add(arr)
+		fmt.Println("敏感词词典加载完成")
+	}()
 
 }
 
 func Check(text string) bool {
 	s, _ := instance.Search(text)
 	if s != "" {
-		log.Println("敏感词:", s, text)
+		log.Println("检测到敏感词:", s, text)
 	}
 	return s == ""
 }

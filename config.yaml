@@ -1,0 +1,25 @@
+# 保持更新。 https://github.com/tomatocuke/openai
+
+http:
+  # 必填: 端口号。 如果修改，注意也修改 docker 启动命令里的端口映射。
+  port: 8081
+  # 可选: 代理地址。需要你有本地或远程代理软件，举例: socks5://127.0.0.1:7890 
+  proxy: 
+
+openai:
+  # 必填: KEY。 文档: https://platform.openai.com/account/api-keys
+  key: 
+  # 可选: 参数调节
+  params:  
+    # openai的接口地址，放出来是因为有些人做了反向代理，要注意这有安全问题，谨慎使用
+    api: https://api.openai.com/v1/chat/completions
+    # 暂时请使用 gpt-3.5-turbo 
+    model: gpt-3.5-turbo
+    # 提示。 可以理解为对其身份设定。 文档: https://platform.openai.com/docs/guides/chat/introduction
+    prompt: 
+
+wechat:
+  # 必填(公众号服务). 与公众号设置保持一致
+  token: XXX
+
+

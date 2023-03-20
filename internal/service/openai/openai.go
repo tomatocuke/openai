@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	api          = "https://api.openai.com/v1/chat/completions"
 	MsgWait      = "这个问题比较复杂，再稍等一下～"
 	exchangeRate = 6.9
 )
@@ -125,12 +124,16 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	if length <= 1 {
 		return "请说详细些...", nil
 	}
+	conf := config.OpenAI
 	var r request
-	r.Model = "gpt-3.5-turbo"
-	r.Messages = []reqMessage{{
-		Role:    "user",
-		Content: msg,
-	}}
+	r.Model = conf.Params.Model
+	r.Messages = []reqMessage{
+		{Role: "user", Content: msg},
+	}
+	// 助手消息
+	if conf.Params.Prompt != "" {
+		r.Messages = append(r.Messages, reqMessage{Role: "system", Content: conf.Params.Prompt})
+	}
 
 	bs, err := json.Marshal(r)
 	if err != nil {
@@ -138,13 +141,13 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	}
 
 	client := &http.Client{Timeout: timeout}
-	req, _ := http.NewRequest("POST", api, bytes.NewReader(bs))
+	req, _ := http.NewRequest("POST", conf.Params.Api, bytes.NewReader(bs))
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+config.C.OpenAI.Key)
+	req.Header.Add("Authorization", "Bearer "+conf.Key)
 
 	// 设置代理
-	if config.C.Http.Proxy != "" {
-		proxyURL, _ := url.Parse(config.C.Http.Proxy)
+	if config.Http.Proxy != "" {
+		proxyURL, _ := url.Parse(config.Http.Proxy)
 		client.Transport = &http.Transport{
 			Proxy: http.ProxyURL(proxyURL),
 		}

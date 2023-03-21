@@ -29,9 +29,9 @@
     ```
   2. 使用Docker启动服务
     ```bash
-    # 注意如果配置不使用80端口，命令中的端口映射要对应修改
+    # 注意9001是配置默认的端口号，如果更改，注意容器内外端口映射，自己更改
     # 注意这里会拷贝配置到容器里，如果修改配置，需到容器内修改，或者启用新的容器
-    docker run -d -p 80:80 -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
+    docker run -d -p 80:9001 -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
     # 查看状况
     docker logs 容器ID 
     ```

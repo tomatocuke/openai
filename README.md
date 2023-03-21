@@ -21,9 +21,11 @@
 4. 两种方式部署
   1. 直接二进制启动
     ```sh
-    # mkdir log
+    mkdir log
+    
     # 尝试启动
     ./openBin 
+    
     # 守护进程 
     nohup ./openaiBin >> log/data.log 2>&1 &
     ```

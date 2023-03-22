@@ -19,25 +19,30 @@
 2. 获取微信公众号`令牌Token`：[微信公众平台](https://mp.weixin.qq.com/)->基本配置->服务器配置->令牌(Token) 
 3. 克隆项目，修改配置文件 `config.yaml`
 4. 两种方式部署
-  1. 直接二进制启动 (Linux)
-    ```sh
-    # mkdir log
-    # 尝试启动
-    ./openaiBin 
-    # 守护进程 
-    nohup ./openaiBin >> log/data.log 2>&1 &
-    ```
-  2. 使用Docker启动服务
-    ```bash
-    # 注意如果配置不使用80端口，命令中的端口映射要对应修改
-    # 注意这里会拷贝配置到容器里，如果修改配置，需到容器内修改，或者启用新的容器
-    docker run -d -p 80:80 -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
-    # 查看状况
-    docker logs 容器ID 
-    ```
+
+  - 直接二进制启动 (Linux)
+      ```sh
+
+      mkdir log
+
+      # 尝试启动
+      ./openaiBin 
+
+      # 守护进程 
+      nohup ./openaiBin >> log/data.log 2>&1 &
+      ```
+  - 使用Docker启动服务
+      ```bash
+      # 注意9001是配置默认的端口号，如果更改，注意容器内外端口映射，自己更改
+      # 注意这里会拷贝配置到容器里，如果修改配置，需到容器内修改，或者启用新的容器
+      docker run -d -p 80:9001 -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
+      # 查看状况
+      docker logs 容器ID 
+      ```
+
   
-5. 验证服务 `curl 'http://127.0.0.1/test?msg=怎么做锅包肉'` ，查看日志 `tail -f log/data.log`
-6. 公众号配置。 服务器地址(URL)填写 `http://服务器IP/wx`，设置明文方式传输，提交后，点击「启用」。 初次设置生效要等一会，过几分钟关闭再启用试试
+1. 验证服务 `curl 'http://127.0.0.1/test?msg=怎么做锅包肉'` ，查看日志 `tail -f log/data.log`
+2. 公众号配置。 服务器地址(URL)填写 `http://服务器IP/wx`，设置明文方式传输，提交后，点击「启用」。 初次设置生效要等一会，过几分钟关闭再启用试试
     
 
 ### 三、其他

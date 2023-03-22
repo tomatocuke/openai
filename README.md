@@ -19,11 +19,11 @@
 2. 获取微信公众号`令牌Token`：[微信公众平台](https://mp.weixin.qq.com/)->基本配置->服务器配置->令牌(Token) 
 3. 克隆项目，修改配置文件 `config.yaml`
 4. 两种方式部署
-  1. 直接二进制启动
+  1. 直接二进制启动 (Linux)
     ```sh
     # mkdir log
     # 尝试启动
-    ./openBin 
+    ./openaiBin 
     # 守护进程 
     nohup ./openaiBin >> log/data.log 2>&1 &
     ```

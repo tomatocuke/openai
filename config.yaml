@@ -2,13 +2,13 @@
 
 http:
   # 必填: 端口号。 如果修改，注意也修改 docker 启动命令里的端口映射。
-  port: 9001
+  port: 80
   # 可选: 代理地址。需要你有本地或远程代理软件，举例: socks5://127.0.0.1:7890 
   proxy: 
 
 openai:
   # 必填: KEY。 文档: https://platform.openai.com/account/api-keys
-  key: 
+  key: XXX
   # 可选: 参数调节
   params:  
     # openai的接口地址，放出来是因为有些人做了反向代理，要注意这有安全问题，谨慎使用
@@ -16,10 +16,20 @@ openai:
     # 暂时请使用 gpt-3.5-turbo 
     model: gpt-3.5-turbo
     # 提示。 可以理解为对其身份设定。 文档: https://platform.openai.com/docs/guides/chat/introduction
+    # 每个问题都会携带，注意，它也占用token消耗。
     prompt: 
+    # 最大token . 限制问题长度+回复长度的最大字数。最大4096，设置得小点，可以减少超时.（不是1汉字=1token）
+    # 800token，汉字不到500？ 公众号也有字数返回限制，大概在700字左右，700字是多少token我也说不清，但maxtokens太大也没用
+    maxTokens: 800
+    # 温度。 0-2 。较高的值将使输出更加随机，而较低的值将使输出更加集中和确定。
+    temperature: 1.0
+  # 限制用户问题最大长度。这个以字计算，非token. 
+  maxQuestionLength: 100
 
 wechat:
   # 必填(公众号服务). 与公众号设置保持一致
   token: XXX
+  # 用户关注时主动发送的消息
+  subscribeMsg: 你好，我是基于ChatGPT的AI助手，有什么能帮助您的吗？
 
 

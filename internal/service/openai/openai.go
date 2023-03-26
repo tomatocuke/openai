@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"openai/internal/config"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -17,8 +16,7 @@ import (
 )
 
 const (
-	MsgWait      = "这个问题比较复杂，再稍等一下～"
-	exchangeRate = 6.9
+	MsgWait = "这个问题比较复杂，再稍等一下～"
 )
 
 var totaltokens int64
@@ -35,15 +33,6 @@ func init() {
 			resultCache = sync.Map{}
 		}
 	}()
-}
-
-type request struct {
-	Model    string       `json:"model"`
-	Messages []reqMessage `json:"messages"`
-}
-type reqMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
 }
 
 type response struct {
@@ -124,26 +113,20 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	if length <= 1 {
 		return "请说详细些...", nil
 	}
-	conf := config.OpenAI
-	var r request
-	r.Model = conf.Params.Model
-	r.Messages = []reqMessage{
-		{Role: "user", Content: msg},
-	}
-	// 助手消息
-	if conf.Params.Prompt != "" {
-		r.Messages = append(r.Messages, reqMessage{Role: "system", Content: conf.Params.Prompt})
+	if length > config.OpenAI.MaxQuestionLength {
+		return "问题字数超出设定限制，请精简问题", nil
 	}
 
-	bs, err := json.Marshal(r)
+	r := newRequest(msg)
+	bs, err := json.Marshal(&r)
 	if err != nil {
 		return "", err
 	}
 
 	client := &http.Client{Timeout: timeout}
-	req, _ := http.NewRequest("POST", conf.Params.Api, bytes.NewReader(bs))
+	req, _ := http.NewRequest("POST", config.OpenAI.Params.Api, bytes.NewReader(bs))
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+conf.Key)
+	req.Header.Add("Authorization", "Bearer "+config.OpenAI.Key)
 
 	// 设置代理
 	if config.Http.Proxy != "" {
@@ -169,14 +152,14 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	if len(data.Choices) > 0 {
 		atomic.AddInt64(&totaltokens, int64(data.Usage.TotalTokens))
 
-		reply := replyMsg(data.Choices[0].Message.Content)
-		log.Printf("本次:用时:%ds,花费约:%f¥,token:%d,请求:%d,回复:%d。 服务启动至今累计花费约:%f¥ \nQ:%s \nA:%s \n",
+		reply := data.Choices[0].Message.Content
+		log.Printf("本次:用时:%ds,花费约:%f$,token:%d,请求:%d,回复:%d。 服务启动至今累计花费约:%f$ \nQ:%s \nA:%s \n\n",
 			int(time.Since(start).Seconds()),
-			float32(data.Usage.TotalTokens/1000)*0.002*exchangeRate,
+			float32(data.Usage.TotalTokens/1000)*0.002,
 			data.Usage.TotalTokens,
 			data.Usage.PromptTokens,
 			data.Usage.CompletionTokens,
-			float32(totaltokens/1000)*0.002*exchangeRate,
+			float32(totaltokens/1000)*0.002,
 			msg,
 			reply,
 		)
@@ -187,75 +170,75 @@ func completions(msg string, timeout time.Duration) (string, error) {
 	return data.Error.Message, nil
 }
 
-func queryMsg(prompt string) (string, int) {
-	msg := strings.TrimSpace(prompt)
-	wordSize := 0
-	length := len([]rune(msg))
-	if length <= 1 {
-		wordSize = 0
-	} else if length <= 3 {
-		msg = "30字以内说说:" + msg
-		wordSize = 30
-	} else if length <= 5 {
-		msg = "99字以内说说:" + msg
-		wordSize = 100
-	} else {
-		// 默认400字以内
-		wordSize = 400
-	}
+// func queryMsg(prompt string) (string, int) {
+// 	msg := strings.TrimSpace(prompt)
+// 	wordSize := 0
+// 	length := len([]rune(msg))
+// 	if length <= 1 {
+// 		wordSize = 0
+// 	} else if length <= 3 {
+// 		msg = "30字以内说说:" + msg
+// 		wordSize = 30
+// 	} else if length <= 5 {
+// 		msg = "99字以内说说:" + msg
+// 		wordSize = 100
+// 	} else {
+// 		// 默认400字以内
+// 		wordSize = 400
+// 	}
 
-	// 检查规定 xx字
-	if idx := strings.IndexRune(msg, '字'); idx > -1 {
-		if idx > 3 && string(msg[idx-3:idx]) == "个" {
-			idx -= 3
-		}
-		end := idx
-		start := idx
-		for i := idx - 1; i >= 0; i-- {
-			if msg[i] <= '9' && msg[i] >= '0' {
-				start = i
-			} else {
-				break
-			}
-		}
+// 	// 检查规定 xx字
+// 	if idx := strings.IndexRune(msg, '字'); idx > -1 {
+// 		if idx > 3 && string(msg[idx-3:idx]) == "个" {
+// 			idx -= 3
+// 		}
+// 		end := idx
+// 		start := idx
+// 		for i := idx - 1; i >= 0; i-- {
+// 			if msg[i] <= '9' && msg[i] >= '0' {
+// 				start = i
+// 			} else {
+// 				break
+// 			}
+// 		}
 
-		if start != end {
-			wordSize, _ = strconv.Atoi(msg[start:end])
-			if wordSize == 0 {
-				wordSize = 400
-			} else if wordSize > 800 {
-				wordSize = 800
-			}
-		}
+// 		if start != end {
+// 			wordSize, _ = strconv.Atoi(msg[start:end])
+// 			if wordSize == 0 {
+// 				wordSize = 400
+// 			} else if wordSize > 800 {
+// 				wordSize = 800
+// 			}
+// 		}
 
-	}
+// 	}
 
-	return msg, wordSize
-}
+// 	return msg, wordSize
+// }
 
-func replyMsg(reply string) string {
-	idx := strings.Index(reply, "\n\n")
-	if idx > -1 && reply[len(reply)-2] != '\n' {
-		reply = reply[idx+2:]
-	}
-	start := 0
-	for i, v := range reply {
-		if !isSymbaol(v) {
-			start = i
-			break
-		}
-	}
+// func replyMsg(reply string) string {
+// 	idx := strings.Index(reply, "\n\n")
+// 	if idx > -1 && reply[len(reply)-2] != '\n' {
+// 		reply = reply[idx+2:]
+// 	}
+// 	start := 0
+// 	for i, v := range reply {
+// 		if !isSymbaol(v) {
+// 			start = i
+// 			break
+// 		}
+// 	}
 
-	return reply[start:]
-}
+// 	return reply[start:]
+// }
 
-var symbols = []rune{'\n', ' ', '，', '。', '？', '?', ',', '.', '!', '！', ':', '：'}
+// var symbols = []rune{'\n', ' ', '，', '。', '？', '?', ',', '.', '!', '！', ':', '：'}
 
-func isSymbaol(w rune) bool {
-	for _, v := range symbols {
-		if v == w {
-			return true
-		}
-	}
-	return false
-}
+// func isSymbaol(w rune) bool {
+// 	for _, v := range symbols {
+// 		if v == w {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }

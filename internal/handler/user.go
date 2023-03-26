@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+type User struct {
+	Id string `json:"id"`
+	IP string `json:"ip"`
+}
+
 var (
 	success  = []byte("success")
 	warn     = "警告，检测到敏感词"
@@ -60,7 +65,8 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 			echo(w, success)
 		case "subscribe":
 			log.Println("新增关注:", msg.FromUserName)
-			echo(w, success)
+			b := msg.GenerateEchoData(config.Wechat.SubscribeMsg)
+			echo(w, b)
 			return
 		case "unsubscribe":
 			log.Println("取消关注:", msg.FromUserName)

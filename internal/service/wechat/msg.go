@@ -30,7 +30,7 @@ func (msg *Msg) GenerateEchoData(s string) []byte {
 		ToUserName:   msg.FromUserName,
 		FromUserName: msg.ToUserName,
 		CreateTime:   time.Now().Unix(),
-		MsgType:      msg.MsgType,
+		MsgType:      "text",
 		Content:      s,
 	}
 	bs, _ := xml.Marshal(&data)

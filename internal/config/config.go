@@ -9,21 +9,27 @@ import (
 
 var (
 	Http struct {
-		Port  string `json:"port"`
-		Proxy string `json:"proxy"`
+		Port  string
+		Proxy string
 	}
 
 	OpenAI struct {
-		Key    string `json:"key"`
+		Key string
+
 		Params struct {
-			Api    string `json:"api"`
-			Model  string `json:"model"`
-			Prompt string `json:"prompt"`
-		} `json:"params"`
+			Api         string
+			Model       string
+			Prompt      string
+			Temperature float32
+			MaxTokens   uint16
+		}
+
+		MaxQuestionLength int
 	}
 
 	Wechat struct {
-		Token string `json:"token"`
+		Token        string
+		SubscribeMsg string
 	}
 )
 
@@ -52,4 +58,5 @@ func init() {
 		fmt.Println("未设置公众号token，公众号功能不可用")
 	}
 
+	fmt.Println(OpenAI.Params)
 }

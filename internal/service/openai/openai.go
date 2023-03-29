@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -99,7 +100,7 @@ func Query(msg string, timeout time.Duration) string {
 	select {
 	case result = <-ch:
 	case <-ctx.Done():
-		result = "请稍等10s后复制问题再问我一遍"
+		result = "请求超时，稍候再问这个问题"
 	}
 
 	return result
@@ -153,13 +154,14 @@ func completions(msg string, timeout time.Duration) (string, error) {
 		atomic.AddInt64(&totaltokens, int64(data.Usage.TotalTokens))
 
 		reply := data.Choices[0].Message.Content
+		fmt.Println(data.Usage.TotalTokens, float64(data.Usage.TotalTokens/1000))
 		log.Printf("本次:用时:%ds,花费约:%f$,token:%d,请求:%d,回复:%d。 服务启动至今累计花费约:%f$ \nQ:%s \nA:%s \n\n",
 			int(time.Since(start).Seconds()),
-			float32(data.Usage.TotalTokens/1000)*0.002,
+			float64(data.Usage.TotalTokens)/1000*0.002,
 			data.Usage.TotalTokens,
 			data.Usage.PromptTokens,
 			data.Usage.CompletionTokens,
-			float32(totaltokens/1000)*0.002,
+			float64(totaltokens)/1000*0.002,
 			msg,
 			reply,
 		)

@@ -60,7 +60,7 @@ func init() {
 func Check(text string) bool {
 	s, _ := instance.Search(text)
 	if s != "" {
-		log.Println("检测到敏感词:", s, text)
+		log.Println("检测到敏感词:", s)
 	}
 	return s == ""
 }

@@ -7,6 +7,7 @@ type request struct {
 	Messages    []requestMessageItem `json:"messages"`
 	Temperature float32              `json:"temperature"`
 	MaxTokens   uint16               `json:"max_tokens"`
+	Stream      bool                 `json:"stream"`
 }
 
 type requestMessageItem struct {
@@ -19,6 +20,7 @@ func newRequest(msg string) (r request) {
 	r.Model = conf.Model
 	r.Temperature = conf.Temperature
 	r.MaxTokens = conf.MaxTokens
+	r.Stream = true
 	r.Messages = []requestMessageItem{
 		{Role: "user", Content: msg},
 	}
@@ -27,3 +29,37 @@ func newRequest(msg string) (r request) {
 	}
 	return
 }
+
+type response struct {
+	Choices []struct {
+		Delta struct {
+			Content string `json:"content"`
+		} `json:"delta`
+	} `json:"choices`
+}
+
+// type response struct {
+// 	ID    string `json:"id"`
+// 	Usage struct {
+// 		PromptTokens     int `json:"prompt_tokens"`
+// 		CompletionTokens int `json:"completion_tokens"`
+// 		TotalTokens      int `json:"total_tokens"`
+// 	} `json:"usage"`
+// 	// Object  string                 `json:"object"`
+// 	// Created int                    `json:"created"`
+// 	// Model   string                 `json:"model"`
+// 	Choices []choiceItem `json:"choices"`
+// 	// Usage   map[string]interface{} `json:"usage"`
+// 	Error struct {
+// 		Message string `json:"message"`
+// 	} `json:"error"`
+// }
+
+// type choiceItem struct {
+// 	Message struct {
+// 		Content string `json:"content"`
+// 	} `json:"message"`
+// 	Delta struct {
+// 		Content string `json:"content"`
+// 	} `json:"delta"`
+// }

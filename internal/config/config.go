@@ -29,8 +29,12 @@ var (
 
 	Wechat struct {
 		Token        string
+		Timeout      int
 		SubscribeMsg string
 	}
+	// User struct {
+	// 	QueryTimesDaily int64
+	// }
 )
 
 func init() {
@@ -48,6 +52,7 @@ func init() {
 	viper.UnmarshalKey("http", &Http)
 	viper.UnmarshalKey("openai", &OpenAI)
 	viper.UnmarshalKey("wechat", &Wechat)
+	// viper.UnmarshalKey("user", &User)
 
 	if OpenAI.Key == "" {
 		fmt.Println("OpenAI的Key不能为空")
@@ -56,6 +61,10 @@ func init() {
 
 	if Wechat.Token == "" {
 		fmt.Println("未设置公众号token，公众号功能不可用")
+	}
+
+	if Wechat.Timeout < 3 || Wechat.Timeout > 13 {
+		Wechat.Timeout = 8
 	}
 
 	fmt.Println(OpenAI.Params)

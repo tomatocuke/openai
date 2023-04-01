@@ -13,16 +13,10 @@ import (
 	"time"
 )
 
-type User struct {
-	Id string `json:"id"`
-	IP string `json:"ip"`
-}
-
 var (
 	success  = []byte("success")
 	warn     = "警告，检测到敏感词"
 	requests sync.Map // K - 消息ID ， V - chan string
-	users    sync.Map
 )
 
 func WechatCheck(w http.ResponseWriter, r *http.Request) {
@@ -89,11 +83,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		ch = make(chan string)
 		requests.Store(msg.MsgId, ch)
-		go func(id int64, msg string) {
-			// 15s不回复微信，则失效
-			result := openai.Query(msg, time.Millisecond*13500)
-			ch <- result
-		}(msg.MsgId, msg.Content)
+		ch <- openai.Query(msg.FromUserName, msg.Content, time.Second*time.Duration(config.Wechat.Timeout))
 	} else {
 		ch = v.(chan string)
 	}
@@ -105,7 +95,6 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		}
 		bs := msg.GenerateEchoData(result)
 		echo(w, bs)
-		close(ch)
 		requests.Delete(msg.MsgId)
 	// 超时不要回答，会重试的
 	case <-time.After(time.Second * 5):
@@ -118,7 +107,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echoJson(w, "", warn)
 		return
 	}
-	s := openai.Query(msg, time.Second*180)
+	s := openai.Query("0", msg, time.Second*8)
 	echoJson(w, s, "")
 }
 

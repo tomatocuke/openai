@@ -26,8 +26,10 @@ func init() {
 // OpenAI可能无法在希望的时间内做出回复
 // 使用goroutine + channel 的形式，不管是否能及时回复用户，后台都打印结果
 func Query(uid string, msg string, timeout time.Duration) string {
+	start := time.Now()
 	defer func() {
 		if err := recover(); err != nil {
+			c
 			log.Println("ERROR:", err)
 		}
 	}()
@@ -82,7 +84,8 @@ loop:
 
 	s := reply.String()
 	log.Printf(
-		"\nQ: %s \nA: %s\n\n",
+		"用时:%ds \nQ: %s \nA: %s\n\n",
+		int(time.Since(start).Seconds()),
 		msg,
 		s,
 	)
@@ -127,33 +130,20 @@ func completions(ch chan []byte, msg string) {
 	buff.Grow(512)
 
 	for scanner.Scan() {
-		// data: {"id":"chatcmpl-706X266U3DAVJiwmo3gjPBfF0ZcZH","object":"chat.completion.chunk","created":1680259464,"model":"gpt-3.5-turbo-0301","choices":[{"delta":{"content":"充"},"index":0,"finish_reason":null}]}
 		select {
 		case <-ctx.Done():
 			return
 		default:
 			bs := scanner.Bytes()
-
-			var ok bool
-			// 截取content内容
-			for i := 150; i < len(bs); i++ {
-				if bs[i] == '"' && bs[i+1] == 'c' && bs[i+7] == 't' {
-					ok = true
-					start := i + 11
-					end := i + 12
-					for bs[end] != '"' {
-						end++
-					}
-					bs = bs[start:end]
-					break
-				}
-			}
-
-			if ok {
-				tmp := strings.Replace(string(bs), "\\n", "\n", -1)
-				buff.WriteString(tmp)
-				// fmt.Print(tmp)
-				if strings.Contains(tmp, "。") {
+			// data: {"id":"chatcmpl-706X266U3DAVJiwmo3gjPBfF0ZcZH","object":"chat.completion.chunk","created":1680259464,"model":"gpt-3.5-turbo-0301","choices":[{"delta":{"content":"充"},"index":0,"finish_reason":null}]}
+			// 从上边这段字符串中，截取content内容。 其中包含的字符串\n转为byte的\n
+			i := bytes.Index(bs, []byte("content"))
+			if i > 0 {
+				j := bytes.Index(bs[i:], []byte("}"))
+				tmp := bytes.Replace(bs[i+10:j+i-1], []byte("\\n"), []byte("\n"), -1)
+				buff.Write(tmp)
+				// fmt.Print(string(tmp))
+				if bytes.Contains(tmp, []byte("。")) {
 					ch <- buff.Bytes()
 					buff.Reset()
 				}

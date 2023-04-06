@@ -9,14 +9,16 @@ import (
 	"net/http"
 	"net/url"
 	"openai/internal/config"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 )
 
 var (
-	scrollMsg   = []byte("【回复“继续”以滚动查看】")
-	resultCache sync.Map
+	serverErrMsg = []byte("服务出错啦，稍后会修复")
+	scrollMsg    = []byte("【回复“继续”以滚动查看】")
+	resultCache  sync.Map
 )
 
 func init() {
@@ -29,8 +31,8 @@ func Query(uid string, msg string, timeout time.Duration) string {
 	start := time.Now()
 	defer func() {
 		if err := recover(); err != nil {
-			c
-			log.Println("ERROR:", err)
+			_, file, line, _ := runtime.Caller(3)
+			log.Println("ERROR:", err, file, line)
 		}
 	}()
 
@@ -68,12 +70,19 @@ func Query(uid string, msg string, timeout time.Duration) string {
 loop:
 	for {
 		select {
+		// 超时控制
 		case <-ctx.Done():
-			if reply.Bytes()[reply.Len()-1] != '\n' {
-				reply.Write([]byte("\r\n\n"))
+			if reply.Len() <= 1 {
+				log.Println("openai请求超时")
+				reply.Write(serverErrMsg)
+			} else {
+				if reply.Bytes()[reply.Len()-1] != '\n' {
+					reply.Write([]byte("\r\n\n"))
+				}
+				reply.Write(scrollMsg)
 			}
-			reply.Write(scrollMsg)
 			break loop
+		// 不断读取
 		case b, ok := <-ch:
 			if !ok {
 				break loop
@@ -117,7 +126,7 @@ func completions(ch chan []byte, msg string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		ch <- []byte("服务出错啦，稍后会修复")
+		ch <- serverErrMsg
 		log.Println("ERROR", err)
 		return
 	}
@@ -136,20 +145,23 @@ func completions(ch chan []byte, msg string) {
 		default:
 			bs := scanner.Bytes()
 			// data: {"id":"chatcmpl-706X266U3DAVJiwmo3gjPBfF0ZcZH","object":"chat.completion.chunk","created":1680259464,"model":"gpt-3.5-turbo-0301","choices":[{"delta":{"content":"充"},"index":0,"finish_reason":null}]}
-			// 从上边这段字符串中，截取content内容。 其中包含的字符串\n转为byte的\n
-			i := bytes.Index(bs, []byte("content"))
-			if i > 0 {
-				j := bytes.Index(bs[i:], []byte("}"))
-				tmp := bytes.Replace(bs[i+10:j+i-1], []byte("\\n"), []byte("\n"), -1)
-				buff.Write(tmp)
-				// fmt.Print(string(tmp))
-				if bytes.Contains(tmp, []byte("。")) {
+			if len(bs) > 100 {
+				bs = bs[6:]
+				var r response
+				json.Unmarshal(bs, &r)
+				if len(r.Choices) == 0 {
+					continue
+				}
+
+				tokenContent := r.Choices[0].Delta.Content
+				// fmt.Print(tokenContent)
+				buff.WriteString(tokenContent)
+				if strings.Contains(tokenContent, "。") || strings.Contains(tokenContent, "\n") {
 					ch <- buff.Bytes()
 					buff.Reset()
 				}
 			}
 		}
-
 	}
 
 	if buff.Len() > 0 {

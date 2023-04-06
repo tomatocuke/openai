@@ -107,7 +107,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echoJson(w, "", warn)
 		return
 	}
-	s := openai.Query("0", msg, time.Second*8)
+	s := openai.Query("0", msg, time.Second*5)
 	echoJson(w, s, "")
 }
 

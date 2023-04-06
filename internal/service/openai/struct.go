@@ -1,6 +1,8 @@
 package openai
 
-import "openai/internal/config"
+import (
+	"openai/internal/config"
+)
 
 type request struct {
 	Model       string               `json:"model"`
@@ -31,11 +33,15 @@ func newRequest(msg string) (r request) {
 }
 
 type response struct {
-	Choices []struct {
-		Delta struct {
-			Content string `json:"content"`
-		} `json:"delta`
-	} `json:"choices`
+	Choices []choice `json:"choices"`
+}
+
+type choice struct {
+	Delta delta `json:"delta"`
+}
+
+type delta struct {
+	Content string `json:"content"`
 }
 
 // type response struct {

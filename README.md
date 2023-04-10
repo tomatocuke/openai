@@ -41,14 +41,14 @@
 5. 服务器地址(URL)填写 `http://服务器IP/wx`，设置明文方式传输，提交后，点击「启用」。
   
 ### 四、QA
-1. 日志出现 `openai请求超时` 
+1. 日志出现 `openai请求超时` <br>
 答：对openai的请求发不过去
 
-2. 出现报错 `connection reset by peer` 或 `Post "https://api.openai.com/v1/chat/completions": EOF`
+2. 出现报错 `connection reset by peer` 或 `Post "https://api.openai.com/v1/chat/completions": EOF`  <br>
 答：是否使用了代理呢？ 大概率是IP被多人使用的结果，换个IP，但是部署不建议使用代理的方式，不稳定。
 
-3. 服务正常，但是公众号无响应？
+3. 服务正常，但是公众号无响应？ <br>
 答：初次设置生效要等一会，过几分钟把公众号的服务器设置按钮关闭再启用试试。
 
-4.文档真特么烂，我部署不成功！
+4.文档真特么烂，我部署不成功！ <br>
 答：别github提问，我很少看。或者你有什么好的建议，欢迎加我QQ:`772532526`，不收费。

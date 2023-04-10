@@ -13,6 +13,7 @@ type Msg struct {
 	MsgType      string   `xml:"MsgType"`
 	Event        string   `xml:"Event"`
 	Content      string   `xml:"Content"`
+	Recognition  string   `xml:"Recognition"`
 
 	MsgId int64 `xml:"MsgId,omitempty"`
 }

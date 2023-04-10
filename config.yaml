@@ -21,7 +21,7 @@ openai:
     # 影响 问题+回复的长度。  gpt-3.5模型最大4096， 非1个汉字1token
     maxTokens: 1024
     # 温度。 0-2 。较高的值将使输出更加随机，而较低的值将使输出更加集中和确定。
-    temperature: 1.0
+    temperature: 0.8
   # 限制用户问题最大长度。这个以字计算，非token. 
   maxQuestionLength: 200
 
@@ -29,7 +29,7 @@ wechat:
   # 必填(公众号服务). 与公众号设置保持一致
   token: XXX
   # 影响滚动返回结果 (5s-13s) 
-  timeout: 8
+  timeout: 7
   # 用户关注时主动发送的消息
   subscribeMsg: 你好，我是基于ChatGPT的AI助手，有什么能帮助您的吗？
 

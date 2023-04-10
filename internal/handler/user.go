@@ -67,6 +67,9 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 			echo(w, success)
 			return
 		}
+	// https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Receiving_standard_messages.html
+	case "voice":
+		msg.Content = msg.Recognition
 	case "text":
 
 	}

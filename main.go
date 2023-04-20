@@ -26,7 +26,9 @@ func main() {
 	r.GET("/", handler.Test)
 
 	// 设置日志
-	SetLog()
+	if !config.Debug {
+		SetLog()
+	}
 
 	fmt.Printf("启动服务，使用 curl 'http://127.0.0.1:%s/test?msg=你好' 测试一下吧\n", config.Http.Port)
 	if err := http.ListenAndServe(":"+config.Http.Port, r); err != nil {

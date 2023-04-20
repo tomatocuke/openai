@@ -8,6 +8,8 @@ import (
 )
 
 var (
+	Debug bool
+
 	Http struct {
 		Port  string
 		Proxy string
@@ -49,6 +51,7 @@ func init() {
 		os.Exit(0)
 	}
 
+	viper.UnmarshalKey("debug", &Debug)
 	viper.UnmarshalKey("http", &Http)
 	viper.UnmarshalKey("openai", &OpenAI)
 	viper.UnmarshalKey("wechat", &Wechat)

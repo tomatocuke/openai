@@ -9,7 +9,7 @@
   - 体验。关注公众号`杠点杠`尝试提问，这仅是个人娱乐号，不推送。   别问预测和实事问题，它不会。
 
 ### 二、Feature
-- [x] 解决微信被动回复限制问题。(设定超时时间，滚动返回)  **有个小bug，偶尔出现两三个字的乱码，待修复**
+- [x] 解决微信被动回复限制问题。(设定超时时间，滚动返回)  
 - [x] 支持用户语音输入。（要主动开启，设置与开发->接口权限->接收语音识别结果。已关注用户可能24小时内生效，可重新关注尝试）
 - [x] 设置代理
 - [x] prompt 提示、max_tokens、temperature 参数调节
@@ -44,7 +44,7 @@
 - 日志出现 `openai请求超时` <br>
 答：对openai的请求发不过去
 
-- 出现报错 `connection reset by peer` 或 `Post "https://api.openai.com/v1/chat/completions": EOF`  <br>
+- 出现报错  `connection reset by peer` 或 `Post "https://api.openai.com/v1/chat/completions": EOF`  <br>
 答：是否使用了代理呢？ 大概率是IP被多人使用的结果，换个IP，但是部署不建议使用代理的方式，不稳定。
 
 - 服务正常，但是公众号无响应？ <br>

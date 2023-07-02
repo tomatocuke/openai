@@ -11,8 +11,9 @@ var (
 	Debug bool
 
 	Http struct {
-		Port  string
-		Proxy string
+		Port   string
+		Proxy  string
+		Prefix string
 	}
 
 	OpenAI struct {
@@ -56,6 +57,10 @@ func init() {
 	viper.UnmarshalKey("openai", &OpenAI)
 	viper.UnmarshalKey("wechat", &Wechat)
 	// viper.UnmarshalKey("user", &User)
+
+	if Http.Prefix == "" {
+		Http.Prefix = "/"
+	}
 
 	if OpenAI.Key == "" {
 		fmt.Println("OpenAI的Key不能为空")

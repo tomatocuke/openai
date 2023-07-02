@@ -3,6 +3,8 @@ package bootstrap
 import (
 	"fmt"
 	"net/http"
+	"openai/internal/config"
+	"strings"
 )
 
 var (
@@ -37,8 +39,12 @@ func (engine *Engine) Run(addr string) (err error) {
 }
 
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	key := req.Method + "-" + req.URL.Path
-	if handler, ok := engine.router[key]; ok {
+	prefixMatched := strings.Index(req.URL.Path, config.Http.Prefix) == 0
+	path := strings.Replace(req.URL.Path, config.Http.Prefix, "/", 1)
+	key := req.Method + "-" + path
+	handler, ok := engine.router[key]
+
+	if prefixMatched && ok {
 		handler(w, req)
 	} else {
 		fmt.Fprintf(w, "404 NOT FOUND: %s\n", req.URL)

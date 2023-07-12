@@ -10,6 +10,10 @@ type request struct {
 	Temperature float32              `json:"temperature"`
 	MaxTokens   uint16               `json:"max_tokens"`
 	Stream      bool                 `json:"stream"`
+	TopP        float32              `json:"top_p"`
+	N           float32              `json:"n"`
+	Logprobs    uint16               `json:"logprobs"`
+	Stop        string               `json:"stop"`
 }
 
 type requestMessageItem struct {
@@ -23,6 +27,10 @@ func newRequest(msg string) (r request) {
 	r.Temperature = conf.Temperature
 	r.MaxTokens = conf.MaxTokens
 	r.Stream = true
+	r.N = 1
+	r.TopP = 1
+	r.Logprobs = 1
+	r.Stop = "\n"
 	r.Messages = []requestMessageItem{
 		{Role: "user", Content: msg},
 	}
